@@ -1339,11 +1339,11 @@ server <- function(input, output, session) {
       sf::sf_extSoftVersion()[["GEOS"]], "3.11.0") >= 0) {
       boundary <- pts_proj |>
         st_union() |>
-        st_convex_hull(ratio = 0.4) #create boundary (convex hull around points)
+        st_concave_hull(ratio = 0.4) #create boundary (convex hull around points)
     } else {
       boundary <- pts_proj |>
         st_union() |>
-        st_concave_hull() #create boundary (concave hull around points)
+        st_convex_hull() #create boundary (concave hull around points)
     }
 
     
@@ -1522,7 +1522,7 @@ server <- function(input, output, session) {
         params <- c(input$start_var_s_e, input$start_spatial_s_e, input$start_nugget_s_e)
       } #What to do if have start values or not
 
-    result <- tryCatch({
+
       fit_exp <- fit_model(
         y = response,
         locs = locs,
@@ -1530,10 +1530,7 @@ server <- function(input, output, session) {
         covfun_name = "exponential_isotropic",
         m_seq = c(15, 30), max_iter = input$max_iter_space_exponential,
         start_parms=params, convtol = 1e-05, reorder = TRUE)
-    }, error = function(e) {
-      # Return NULL or a custom message on failure
-      return("Model Needs Better Starting Values")
-    }) #Try Catch is not working, but model runs (need a warning message handler)
+      
   }) # Run spatial model with exponential_isotropic covariance function-----------------------------------------------------------
   
   
