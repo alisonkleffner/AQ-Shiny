@@ -19,7 +19,7 @@ library(Metrics)
 library(viridis)
 
 ui <- navbarPage(
-  theme = bs_theme(preset = "minty"), # CHOOSE THEME 
+  theme = bs_theme(preset = "flatly"), # CHOOSE THEME (flatly)
   "AQ-Shiny: A Platform for Air Quality Modeling and Prediction", #APP NAME
   id = "nav",
   
@@ -28,7 +28,7 @@ ui <- navbarPage(
            
            helpText( # BEGIN helptext ----------------------------------------------------------------------------------------------------------
                      
-             p("Welcome to AQ-Shiny, a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models with built-in uncertainty quantification.", style = "font-size: 22px; color: black;"),
+             p("Welcome to AQ-Shiny, a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models.", style = "font-size: 22px; color: black;"),
              
              p(icon("magnifying-glass"), strong("Key Features:"), style = "font-size: 20px; color: black;"), #BEGIN FEATURES SECTION ------------
              tags$ul(
@@ -189,10 +189,10 @@ ui <- navbarPage(
                                     helpText(p("Map Details:", style = "font-size: 20px; color: black"),  #START HELP TEXT FOR PLOT DESCRIPTION
                             
                                       tags$ul(
-                                              tags$li("Each point is related to a location of a sensor", style = "font-size: 16px; color: black"),
-                                              tags$li("Points colors are related to their logPM2.5 values", style = "font-size: 16px; color: black"),
-                                              tags$li("You can hover over a point to obtain the specific logPM2.5 value for that location.", style = "font-size: 16px; color: black"),
-                                              tags$li("You can zoom in and zoom out of the map using the controls in the upper right hand corner.", style = "font-size: 16px; color: black")
+                                              tags$li("Each point is related to a location of a sensor", style = "font-size: 18px; color: black"),
+                                              tags$li("Points colors are related to their logPM2.5 values", style = "font-size: 18px; color: black"),
+                                              tags$li("You can hover over a point to obtain the specific logPM2.5 value for that location.", style = "font-size: 18px; color: black"),
+                                              tags$li("You can zoom in and zoom out of the map using the controls in the upper right hand corner.", style = "font-size: 18px; color: black")
                                             ),
                                        br(),
                             
