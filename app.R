@@ -1545,7 +1545,8 @@ server <- function(input, output, session) {
   }) # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
-    covparms <- round(calculation_space_exponential()$covparms[1:3], 4)
+    covparms1 <- calculation_space_exponential()[["covparms"]]
+    covparms <- round(covparms1[1:3], 4)
 
     withMathJax(
       helpText(p(strong("Results: Table of Estimated Covariance Parameters"), style = "color: black; font-size: 18px")),
@@ -1663,6 +1664,8 @@ server <- function(input, output, session) {
 
 
   output$result_space_matern <- renderUI({
+    covparms1 <- calculation_space_matern[["covparms"]]
+    covparms <- round(covparms1[1:4], 4)
     covparms <- round(calculation_space_matern()$covparms[1:4], 4)
 
     withMathJax(
