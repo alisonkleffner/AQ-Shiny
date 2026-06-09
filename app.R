@@ -14,6 +14,8 @@ library(bslib)
 library(DT)
 library(kableExtra)
 library(gstat)
+library(fields)
+library(Metrics)
 library(viridis)
 
 ui <- navbarPage(
@@ -1556,10 +1558,8 @@ server <- function(input, output, session) {
   output$result_space_exponential <- renderUI({
     
     print(class(calculation_space_exponential()))
-    print(typeof(calculation_space_exponential()))
     str(calculation_space_exponential())
-    names(calculation_space_exponential())
-    
+
     covparms1 <- calculation_space_exponential()[["covparms"]]
     covparms <- round(covparms1[1:3], 4)
 
