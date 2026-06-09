@@ -1545,7 +1545,7 @@ server <- function(input, output, session) {
   }) # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
-    covparms1 <- calculation_space_exponential()[["covparms"]]
+    covparms1 <- calculation_space_exponential()["covparms"]
     covparms <- round(covparms1[1:3], 4)
 
     withMathJax(
@@ -1664,7 +1664,7 @@ server <- function(input, output, session) {
 
 
   output$result_space_matern <- renderUI({
-    covparms1 <- calculation_space_matern[["covparms"]]
+    covparms1 <- calculation_space_matern["covparms"]
     covparms <- round(covparms1[1:4], 4)
     covparms <- round(calculation_space_matern()$covparms[1:4], 4)
 
