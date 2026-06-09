@@ -1335,9 +1335,17 @@ server <- function(input, output, session) {
     
     pts_proj <- st_transform(pts, 3857)
     
-    boundary <- pts_proj |>
-      st_union() |>
-      st_concave_hull(ratio = 0.4) #create boundary (convex hull around points)
+  if (utils::compareVersion(
+      sf::sf_extSoftVersion()[["GEOS"]], "3.11.0") >= 0) {
+      boundary <- pts_proj |>
+        st_union() |>
+        st_concave_hull(ratio = 0.4) #create boundary (convex hull around points)
+    } else {
+      boundary <- pts_proj |>
+        st_union() |>
+        st_concave_hull() #create boundary (convex hull around points)
+    }
+
     
     grid <- st_make_grid(
       boundary,
@@ -1549,7 +1557,7 @@ server <- function(input, output, session) {
   }) # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
-    covparms1 <- calculation_space_exponential()[["covparms"]]
+    covparms1 <- calculation_space_exponential()$covparms
     covparms <- round(covparms1[1:3], 4)
 
     withMathJax(
@@ -1668,9 +1676,9 @@ server <- function(input, output, session) {
 
 
   output$result_space_matern <- renderUI({
-    covparms1 <- calculation_space_matern["covparms"]
+    covparms1 <- calculation_space_matern()$covparms
     covparms <- round(covparms1[1:4], 4)
-    covparms <- round(calculation_space_matern()$covparms[1:4], 4)
+    #covparms <- round(calculation_space_matern()$covparms[1:4], 4)
 
     withMathJax(
       helpText(p(strong("Results: Table of Estimated Covariance Parameters"), style = "color: black; font-size: 18px")),
