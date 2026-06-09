@@ -344,7 +344,7 @@ ui <- navbarPage(
                 conditionalPanel("output.col_exists == false || (input.time_options2 != '' && output.col_exists == true)", #BEGIN COND PANEL: SP IDW ------
 
                     helpText(p(strong("About:"), "Inverse Distance Weighting predits at new locations using a spatial weighted average. The mathematical formulation is in the right-hand panel.", style = "font-size: 18px; color: black;"),
-                             p(strong("Grid:"), "Currently the code creates a grid for you to predict, but you can upload your own locations in the Prediction Tab. Grid creation uses a convex hull, meaning it creates the smallest possible convex shape that complete encloses the provided locations. The default grid cell size is 5 km, but you can check the box for more options to update this.", style = "font-size: 18px; color: black;"),
+                             p(strong("Grid:"), "Currently the code creates a grid for you to predict, but you can upload your own locations in the Prediction Tab. Grid creation uses a concave hull. The default grid cell size is 5 km, but you can check the box for more options to update this.", style = "font-size: 18px; color: black;"),
                              br()
                              ), #HELP TEXT FOR BREIF OVERVIEW OF IDW AND GRID CREATION
                     
