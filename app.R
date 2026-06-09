@@ -1152,6 +1152,10 @@ server <- function(input, output, session) {
 
   ## BEGIN: Time in Space Map ----------------------------------------------------------------------------------------------------------
   
+  observe({
+    print(sf::sf_extSoftVersion())
+  })
+  
   popup_shown2 <- reactiveVal(FALSE)
   observeEvent(input$plot, { 
     if (input$plot == "Time in Space" && !popup_shown2()) {
@@ -1545,7 +1549,7 @@ server <- function(input, output, session) {
   }) # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
-    covparms1 <- calculation_space_exponential()["covparms"]
+    covparms1 <- calculation_space_exponential()[["covparms"]]
     covparms <- round(covparms1[1:3], 4)
 
     withMathJax(
