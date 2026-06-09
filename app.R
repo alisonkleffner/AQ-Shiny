@@ -1339,11 +1339,11 @@ server <- function(input, output, session) {
       sf::sf_extSoftVersion()[["GEOS"]], "3.11.0") >= 0) {
       boundary <- pts_proj |>
         st_union() |>
-        st_concave_hull(ratio = 0.4) #create boundary (convex hull around points)
+        st_convex_hull(ratio = 0.4) #create boundary (convex hull around points)
     } else {
       boundary <- pts_proj |>
         st_union() |>
-        st_concave_hull() #create boundary (convex hull around points)
+        st_concave_hull() #create boundary (concave hull around points)
     }
 
     
@@ -1557,7 +1557,13 @@ server <- function(input, output, session) {
   }) # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
-    covparms1 <- calculation_space_exponential()$covparms
+    
+    print(class(calculation_space_exponential()))
+    print(typeof(calculation_space_exponential()))
+    str(calculation_space_exponential())
+    names(calculation_space_exponential())
+    
+    covparms1 <- calculation_space_exponential()[["covparms"]]
     covparms <- round(covparms1[1:3], 4)
 
     withMathJax(
