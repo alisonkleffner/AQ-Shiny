@@ -344,7 +344,7 @@ ui <- navbarPage(
                 conditionalPanel("output.col_exists == false || (input.time_options2 != '' && output.col_exists == true)", #BEGIN COND PANEL: SP IDW ------
 
                     helpText(p(strong("About:"), "Inverse Distance Weighting predits at new locations using a spatial weighted average. The mathematical formulation is in the right-hand panel.", style = "font-size: 18px; color: black;"),
-                             p(strong("Grid:"), "Currently the code creates a grid for you to predict, but you can upload your own locations in the Prediction Tab. Grid creation uses a concave hull. The default grid cell size is 5 km, but you can check the box for more options to update this.", style = "font-size: 18px; color: black;"),
+                             p(strong("Grid:"), "Currently the code creates a grid for you to predict, but you can upload your own locations in the Prediction Tab. Grid creation uses a convex hull. The default grid cell size is 5 km, but you can check the box for more options to update this.", style = "font-size: 18px; color: black;"),
                              br()
                              ), #HELP TEXT FOR BREIF OVERVIEW OF IDW AND GRID CREATION
                     
@@ -853,6 +853,9 @@ ui <- navbarPage(
              
              tabPanel("Version Information",
                     p(strong("Version Information Page"), style = "font-size: 18px; color: black; text-align:center;"),
+                    br(),
+                    p(icon("github"), strong("Report Issues in GitHub Repo:", "https://github.com/alisonkleffner/AQ-Shiny"), style = "font-size: 18px; color: black; text-align:center;"),
+                    br(),
                     br(),
                     p(strong("Description:"), "This page will be update everytime a new version of AQ-Shiny is available. It will list any new updates made to AQ-Shiny.", style = "font-size: 14px; color: black; center;"),
                     br(),
