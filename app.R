@@ -797,15 +797,15 @@ ui <- navbarPage(
                
                uiOutput("choice_container2"), #Choices of models available to be ran
                
-               helpText(p(strong("Step 2"), "Check the Model Comparison Metrics you would like to calculate for your chosen model:", style = "font-size: 18px; color: black;"),
+               helpText(p(strong("Step 2: "), "Check the Model Comparison Metrics you would like to calculate for your chosen model:", style = "font-size: 18px; color: black;"),
                ), #HELPTEXT INSTRUCTIONS
                
                tags$head(
                  tags$style(HTML(".small-checkbox label {font-size: 14px;}"))
                ), #Make Checkbox Text smaller
                
-               div(class = "small-checkbox", checkboxInput("rmse", "Calculate the Root Mean Square Error", FALSE)), #RMSE checkbox
-               div(class = "small-checkbox", checkboxInput("mae", "Calculate the Mean Absolute Error", FALSE)), #MAE checkbox
+               div(class = "small-checkbox", checkboxInput("rmse", "Calculate the Root Mean Square Error (RMSE)", FALSE)), #RMSE checkbox
+               div(class = "small-checkbox", checkboxInput("mae", "Calculate the Mean Absolute Error (MAE)", FALSE)), #MAE checkbox
                div(class = "small-checkbox", checkboxInput("corr", "Calculate the Correlation Between Actual & Predicted Values", FALSE)), #Correlation Checkbox
                
               uiOutput("show_comp_button") #Make button available once data set uploaded.
