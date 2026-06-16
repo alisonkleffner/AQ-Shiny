@@ -1477,7 +1477,10 @@ server <- function(input, output, session) {
     if (input$cov_function_space == "exponential_isotropic") {
 
       withMathJax(
-        helpText(strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
+        helpText(strong("Description:", style = "color: black; font-size: 18px;"),
+                 tags$p(HTML("The Exponential isotropic (depends only on distance) covariance function provides a common spatial dependence structure for relatively rough spatial surfaces"), style = "color: black; font-size: 14px;"),
+                 br(),
+          strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
                  tags$p(HTML("Parameter vector: \\((\\sigma^2, \\rho_s, \\tau^2)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p("where:", style = "color: black; font-size: 14px;"),
                  tags$ul(
@@ -1486,7 +1489,7 @@ server <- function(input, output, session) {
                    tags$li(HTML("\\(\\tau^2\\) = nugget ratio"), style = "color: black; font-size: 14px;")
                  ),
 
-                 tags$p(HTML("Let the space-time locations be: \\(x = (s_1, \\ldots, s_d)\\)"), style = "color: black; font-size: 14px;"),
+                 tags$p(HTML("Let the spatial locations be: \\(x = (s_1, \\ldots, s_d)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("Define the diagonal scaling matrix: \\(D = \\mathrm{diag}(\\rho_s, \\ldots, \\rho_s)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("The covariance function is parameterized as: \\(M(x,y) = \\sigma^2 \\exp\\!\\left(- \\left\\| D^{-1}(x - y) \\right\\|\\right)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("Equivalently: \\(\\left\\| D^{-1}(x - y) \\right\\| = \\sqrt{ \\frac{\\| s_x - s_y \\|^2}{\\rho_s^2} }\\)"), style = "color: black; font-size: 14px;"),
@@ -1603,7 +1606,10 @@ server <- function(input, output, session) {
     if (input$cov_function_space == "matern_isotropic") {
 
       withMathJax(
-        helpText(strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
+        helpText(strong("Description:", style = "color: black; font-size: 18px;"),
+                 tags$p(HTML("The Matern isotropic (depends only on distance) covariance function provides a additional flexibility compared to the exponential isotropic covariance function through the additional smoothness parameter."), style = "color: black; font-size: 14px;"),
+                 br(),
+                 strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
                  tags$p(HTML("Parameter vector: \\((\\sigma^2, \\rho_s, \\nu, \\tau^2)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p("where:", style = "color: black; font-size: 14px;"),
                  tags$ul(
@@ -1613,7 +1619,7 @@ server <- function(input, output, session) {
                    tags$li(HTML("\\(\\tau^2\\) = nugget ratio"), style = "color: black; font-size: 14px;")
                  ),
 
-                 tags$p(HTML("Let the space-time locations be: \\(x = (s_1, s_2)\\)"), style = "color: black; font-size: 14px;"),
+                 tags$p(HTML("Let the spatial locations be: \\(x = (s_1, s_2)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("Define the diagonal scaling matrix: \\(D = \\mathrm{diag}(\\rho_s, \\rho_s)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("Define the scaled space distance: \\(r = \\left\\| D^{-1}(x - y) \\right\\| = \\sqrt{ \\frac{(s_{1x} - s_{1y})^2 + (s_{2x} - s_{2y})^2}{\\rho_s^2} }\\)"), style = "color: black; font-size: 14px;"),
                  tags$p(HTML("The Matern covariance function is parameterized as: \\(M(x,y) = \\sigma^2 \\frac{1}{2^{\\nu-1}\\Gamma(\\nu)} \\, r^{\\nu} K_{\\nu}(r)\\)"), style = "color: black; font-size: 14px;"),
