@@ -99,7 +99,7 @@ ui <- navbarPage(
                           tags$li("Longitude", style = "font-size: 16px; color: black"),
                           tags$li("Latitude", style = "font-size: 16px; color: black"),
                           tags$li("logPM2.5", style = "font-size: 16px; color: black"),
-                          tags$li("t1: time (if doing a Spatio-Temporal Analysis)", style = "font-size: 16px; color: black")
+                          tags$li("t: time (if doing a Spatio-Temporal Analysis)", style = "font-size: 16px; color: black")
                         ), # END EXPLANATION OF DATASET COLUMNS ------------------------------------------------------------------------------------  
                         
                         br()
@@ -139,6 +139,8 @@ ui <- navbarPage(
              
              # BEGIN Main Panel ----------------------------------------------------------------------------------------------------------------------
              mainPanel(
+               
+               textOutput("contents"),
                
                conditionalPanel( #BEGIN CONDITIONAL TABLE TO DISPLAY RAW SPATIAL DATASET -------------------------------------------------------------
                  condition = "input.summ_view_sp == 'Raw Data' & output.col_exists == false",
@@ -715,7 +717,7 @@ ui <- navbarPage(
                      helpText(p("File must contain columns names:", style = "font-size: 16px; color: black"),  #START HELP TEXT FOR PLOT DESCRIPTION
                               
                               tags$ul(
-                                tags$li("site_id: ID for location prediction", style = "font-size: 14px; color: black"),
+                                tags$li("ID: ID for location prediction", style = "font-size: 14px; color: black"),
                                 tags$li("Longitude", style = "font-size: 14px; color: black"),
                                 tags$li("Latitude", style = "font-size: 14px; color: black")
                               )
@@ -744,7 +746,7 @@ ui <- navbarPage(
                   helpText(p("File must contain columns names:", style = "font-size: 16px; color: black"),  #START HELP TEXT FOR PLOT DESCRIPTION
                            
                            tags$ul(
-                             tags$li("site_id: ID for location prediction", style = "font-size: 14px; color: black"),
+                             tags$li("ID: ID for location prediction", style = "font-size: 14px; color: black"),
                              tags$li("Longitude", style = "font-size: 14px; color: black"),
                              tags$li("Latitude", style = "font-size: 14px; color: black"),
                              tags$li("t: time", style = "font-size: 14px; color: black")
@@ -766,7 +768,8 @@ ui <- navbarPage(
             uiOutput("message4"),
            
             conditionalPanel(condition = "output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", #BEGIN COND PANEL SPATIAL GP OUTPUT ---------
-                            shinycssloaders::withSpinner(uiOutput("spat_exp_pred_result")),
+                             textOutput("contents_spatial"),
+                             shinycssloaders::withSpinner(uiOutput("spat_exp_pred_result")),
                             br(),
                             br(),
                             uiOutput("space_pred_button")
@@ -780,6 +783,7 @@ ui <- navbarPage(
            ), #END COND PANEL IDW OUTPUT -----------------------------------------------------------------------------------------------------------------------------------------------------
            
            conditionalPanel(condition = "output.current_selection == 'Exponential Space-Time' || output.current_selection == 'Matern Space-Time'", #BEGIN COND PANEL FOR ST GP OUTPUT --------
+                            textOutput("contents_st"),
                             shinycssloaders::withSpinner(uiOutput("st_pred_result")),
                             br(),
                             br(),
@@ -935,10 +939,108 @@ server <- function(input, output, session) {
     switch(ext,
            csv = vroom::vroom(input$upload$datapath, delim = ","),
            validate("Invalid file; Please upload a .csv file")) #Verify the data set is a csv file
+    
   })  # Upload Dataset -------------------------------------------------------------------------------------------------------------------
   
+  validated_data <- reactive({ ## Validate Data Set--------------------------------------------------------------------------------------
+    
+    req(input$upload)
+    
+    data <- read.csv(
+      input$upload$datapath
+    )
+    
+    required_columns <- c('Latitude', 'Longitude', "logPM2.5", "ID")
+    column_names <- colnames(data)
+    
+    missing_columns <- setdiff(required_columns, column_names)
+    
+    if (length(missing_columns) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Missing required columns: ",
+            paste(missing_columns, collapse = ", ")
+          )
+        )
+      )}
+    
+    # Columns that must be numeric
+    numeric_columns <- c(
+      "Latitude",
+      "Longitude",
+      "logPM2.5"
+    )
+    
+    # Check which columns are not numeric
+    non_numeric_columns <- numeric_columns[
+      !sapply(data[numeric_columns], is.numeric)
+    ]
+    
+    if (length(non_numeric_columns) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "The following columns must be numeric: ",
+            paste(non_numeric_columns, collapse = ", ")
+          )
+        )
+      )
+    }
+    
+    # Check that latitude values are valid
+    invalid_latitude <- which(
+      is.na(data$Latitude) |
+        data$Latitude < -90 |
+        data$Latitude > 90
+    )
+    
+    if (length(invalid_latitude) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Invalid Latitude values found in row(s): ",
+            paste(invalid_latitude, collapse = ", "),
+            ". Latitude must be between -90 and 90."
+          )
+        )
+      )
+    }
+    
+    # Check that longitude values are valid
+    invalid_longitude <- which(
+      is.na(data$Longitude) |
+        data$Longitude < -180 |
+        data$Longitude > 180
+    )
+    
+    if (length(invalid_longitude) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Invalid Longitude values found in row(s): ",
+            paste(invalid_longitude, collapse = ", "),
+            ". Longitude must be between -180 and 180."
+          )
+        )
+      )
+    }
+    
+    data
+  }) #changed
+  
+  output$contents <- renderText({
+    validated_data()
+    
+    " "
+  })#changed
+  
   output$data_raw_spatial <- renderDataTable({ 
-   data <- data()
+   data <- validated_data()
    
    data %>%
      select("ID", "Latitude", "Longitude", "logPM2.5")
@@ -956,16 +1058,16 @@ server <- function(input, output, session) {
   }, rownames = FALSE, align = 'c')   # Create Summary Table for Spatial Data -------------------------------------------------------------
 
     output$data_raw_st <- renderDataTable({ 
-    data <- data()
+    data <- validated_data()
     
     data %>%
-      select("ID", "Latitude", "Longitude", "t1", "logPM2.5") %>% 
-      mutate(across(c(t1, logPM2.5), round, digits = 4))
+      select("ID", "Latitude", "Longitude", "t", "logPM2.5") %>% 
+      mutate(across(c(t, logPM2.5), round, digits = 4))
     
   }, rownames = FALSE) # Create Raw Data Table for ST Data --------------------------------------------------------------------------------
 
   output$data_sum_st<- renderDataTable({
-    data <- data()
+    data <- validated_data()
     
     data %>%
       group_by(ID) %>%
@@ -978,12 +1080,14 @@ server <- function(input, output, session) {
   }, rownames = FALSE)  # Create Summary Table for ST Data ---------------------------------------------------------------------------------
   
   output$col_exists <- reactive({
-    data <- data()
+    data <- validated_data()
     req(data) # Ensure data is loaded
-    "t1" %in% names(data)
+    "t" %in% names(data)
   }) #CHECK FOR TIME COLUMN ---------------------------------------------------------------------------------------------------------------
   
   outputOptions(output, "col_exists", suspendWhenHidden = FALSE)
+  
+  # END DATA INPUT TAB   ------------------------------------------------------------------------------------------------------------------------
 
   # Visualization TAB ---------------------------------------------------------------------------------------------------------------------
 
@@ -1074,37 +1178,37 @@ server <- function(input, output, session) {
   ## START: Space in Time Map ------------------------------------------------------------------------------------------------------------
 
     meuse_plot <- reactive({
-    dat <- data()
-
-    new_data <- pivot_longer(dat,cols = c(4,5, 8:13, 15), #This step not necessary, but keeps things more flexible for future functionality
-                             names_to = "variable",
-                             values_to = "value")
-
-    filter_meuse <- new_data %>% filter(variable == "logPM2.5")
-
-    plot_ly(
-      data = filter_meuse,
-      lon = ~Longitude,
-      lat = ~Latitude,
-      type = 'scattermapbox',
-      mode = 'markers',
-      color = ~value, # Color by a categorical variable, e.g., status
-      colors = viridis::cividis(n = 100),
-      frame = ~t1, # Animate across time points
-      marker = list(size = 10, opacity = 0.8),
-      showlegend = FALSE,
-      text = ~paste("logPM2.5: ", round(value, 4)),
-      hoverinfo = "text"
-    ) %>%
-      layout(
-        mapbox = list(
-          style = "open-street-map", #zoom into california
-          zoom = 5,
-          center = list(
-            lon = mean(filter_meuse$Longitude),
-            lat = mean(filter_meuse$Latitude)
-          )
-        ))
+      dat <- data()
+      
+      #new_data <- pivot_longer(dat,cols = c(4,5, 8:13, 15), #This step not necessary, but keeps things more flexible for future functionality
+      #                         names_to = "variable",
+      #                         values_to = "value")
+      
+      filter_meuse <- dat[,c("t", "Longitude", "Latitude", "logPM2.5")] #changed
+      
+      plot_ly(
+        data = filter_meuse,
+        lon = ~Longitude,
+        lat = ~Latitude,
+        type = 'scattermapbox',
+        mode = 'markers',
+        color = ~logPM2.5, # Color by a categorical variable, e.g., status
+        colors = viridis::cividis(n = 100),
+        frame = ~t, # Animate across time points #changed
+        marker = list(size = 10, opacity = 0.8),
+        showlegend = FALSE,
+        text = ~paste("logPM2.5: ", round(logPM2.5, 4)),
+        hoverinfo = "text"
+      ) %>%
+        layout(
+          mapbox = list(
+            style = "open-street-map", #zoom into california
+            zoom = 5,
+            center = list(
+              lon = mean(filter_meuse$Longitude),
+              lat = mean(filter_meuse$Latitude)
+            )
+          )) ##changed
 
   }) # Reactive expression to hold the plot. ---------------------------------------------------------------------------------------------
 
@@ -1177,10 +1281,10 @@ server <- function(input, output, session) {
   }) #Create Pop-Up to warn people this plot may take awhile to render -----------------------------------------------------------------
 
   makePopupPlot <- function (clickedArea, df) {
-    plotData <- df[c("ID", "t1","logPM2.5", "Latitude", "Longitude")]
+    plotData <- df[c("ID", "t","logPM2.5", "Latitude", "Longitude")] #changed
     plotDataSubset <- subset(plotData, plotData['ID'] == clickedArea)
-
-    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t1, y = logPM2.5)) +
+    
+    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = logPM2.5)) + #changed
       geom_point() +
       geom_line(group = 1) +
       xlab("Time") +
@@ -1188,7 +1292,7 @@ server <- function(input, output, session) {
       theme(legend.position = "none",
             axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
       theme(plot.margin = unit(c(0,0.5,0,0), "cm"), plot.title = element_text(size = 10))
-
+    
     return (popupPlot)
   } #Define function to create pop ups when hover over points -------------------------------------------------------------------------
 
@@ -1231,16 +1335,16 @@ server <- function(input, output, session) {
     }
   ) #Create file download for time in space plot ---------------------------------------------------------------------------------------
   
-  output$code_block_st_map2 <- renderPrint({
+  output$code_block_st_map2 <- renderPrint({ #changed
     cat("# This is a raw R code block snippet\n")
     cat("library(tidyverse)\n")
     cat("library(leaflet)\n")
-
+    
     cat("makePopupPlot <- function(clickedArea, df) { ##create an individual time series plot for one sensor location
-    plotData <- df[c('ID', 't1', 'logPM2.5', 'Latitude', 'Longitude')]
+    plotData <- df[c('ID', 't', 'logPM2.5', 'Latitude', 'Longitude')]
     plotDataSubset <- subset(plotData, plotData['ID'] == clickedArea)
 
-    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t1, y = logPM2.5)) + 
+    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = logPM2.5)) + 
       geom_point() +
       geom_line(group = 1) +
       xlab('Time') +
@@ -1251,7 +1355,7 @@ server <- function(input, output, session) {
 
     return (popupPlot)
   } \n")
-
+    
     cat("\n id_only <- data %>%
       group_by(ID) %>%
       summarise(lat = mean(Latitude),
@@ -1318,9 +1422,9 @@ server <- function(input, output, session) {
 
   output$dynamic_dropdown2 <- renderUI({
     df <- req(data())
-    req("t1" %in% names(df))
-
-    choices2 <- as.character(unique(df$t1))
+    req("t" %in% names(df)) #changed
+    
+    choices2 <- as.character(unique(df$t)) #changed
     selectInput("time_options2", "Select a time", choices = c(" " = "", setNames(choices2, choices2)), selected = "")
   }) # Drop down of time points if want to turn ST into a spatial analysis -----------------------------------------------------------
 
@@ -1328,8 +1432,8 @@ server <- function(input, output, session) {
     req(data())
     data <- data()
 
-    if("t1" %in% names(data)){
-      data_new <- filter(data, t1 == as.numeric(input$time_options2))
+    if("t" %in% names(data)){
+      data_new <- filter(data, t == as.numeric(input$time_options2))
     } else{
       data_new <- data
     }
@@ -1353,7 +1457,6 @@ server <- function(input, output, session) {
         st_convex_hull() #create boundary (concave hull around points)
     }
 
-    
     grid <- st_make_grid(
       boundary,
       cellsize = as.numeric(input$grid_size),   # meters
@@ -1506,7 +1609,7 @@ server <- function(input, output, session) {
     req(data())
     data <- data()
 
-    choices <- as.character(unique(data$t1))
+    choices <- as.character(unique(data$t))
     selectInput("time_options", "Select a time", choices = c("Select..." = "", choices), selected = "")
   }) # Drop down of time points if want to turn ST into a spatial analysis ------------------------------------------------------------
 
@@ -1514,8 +1617,8 @@ server <- function(input, output, session) {
     req(data())
     data <- data()
 
-    if("t1" %in% names(data)){
-      data_new <- filter(data, t1 == as.numeric(input$time_options))
+    if("t" %in% names(data)){
+      data_new <- filter(data, t == as.numeric(input$time_options))
     } else{
       data_new <- data
     } # If ST dataset, filter for selected time for spatial analysis
@@ -1532,7 +1635,6 @@ server <- function(input, output, session) {
         params <- c(input$start_var_s_e, input$start_spatial_s_e, input$start_nugget_s_e)
       } #What to do if have start values or not
 
-
       fit_exp <- fit_model(
         y = response,
         locs = locs,
@@ -1542,6 +1644,10 @@ server <- function(input, output, session) {
         start_parms=params, convtol = 1e-05, reorder = TRUE)
       
   }) # Run spatial model with exponential_isotropic covariance function-----------------------------------------------------------
+  
+  
+  
+  
   
   
   output$code_block_sp_model1<- renderPrint({
@@ -1565,8 +1671,8 @@ server <- function(input, output, session) {
 
   output$result_space_exponential <- renderUI({
     
-    print(class(calculation_space_exponential()))
-    str(calculation_space_exponential())
+    #print(class(calculation_space_exponential()))
+    #str(calculation_space_exponential())
 
     covparms1 <- calculation_space_exponential()[["covparms"]]
     covparms <- round(covparms1[1:3], 4)
@@ -1641,8 +1747,8 @@ server <- function(input, output, session) {
     req(data())
     data <- data()
 
-    if("t1" %in% names(data)){
-      data_new <- filter(data, t1 == input$time_options)
+    if("t" %in% names(data)){
+      data_new <- filter(data, t == input$time_options)
     } else{
       data_new <- data
     }
@@ -1761,7 +1867,7 @@ server <- function(input, output, session) {
     data <- data()
 
     add_busy_spinner(spin = "cube-grid")
-    loc <- data[,c("Longitude","Latitude","t1")]
+    loc <- data[,c("Longitude","Latitude","t")]
     locs <- as.matrix(loc)
     response <- as.matrix(data[,c("logPM2.5")])
     X <- as.matrix( rep(1,nrow(locs)))
@@ -1783,7 +1889,7 @@ server <- function(input, output, session) {
   output$code_block_st_model1<- renderPrint({
     cat(" library(GpGp) \n")
     
-    cat(" loc <- data[,c('Longitude','Latitude','t1')]
+    cat(" loc <- data[,c('Longitude','Latitude','t')]
  locs <- as.matrix(loc)
  response <- as.matrix(data[,c('logPM2.5')])
  X <- as.matrix( rep(1,nrow(locs)))
@@ -1886,7 +1992,7 @@ server <- function(input, output, session) {
     data <- data()
     
     add_busy_spinner(spin = "cube-grid")
-    loc <- data[,c("Longitude","Latitude","t1")]
+    loc <- data[,c("Longitude","Latitude","t")]
     locs <- as.matrix(loc)
     response <- as.matrix(data[,c("logPM2.5")])
     X <- as.matrix( rep(1,nrow(locs)))
@@ -1908,7 +2014,7 @@ server <- function(input, output, session) {
   output$code_block_st_model2<- renderPrint({
     cat(" library(GpGp) \n")
     
-    cat(" loc <- data[,c('Longitude','Latitude','t1')]
+    cat(" loc <- data[,c('Longitude','Latitude','t')]
  locs <- as.matrix(loc)
  response <- as.matrix(data[,c('logPM2.5')])
  X <- as.matrix( rep(1,nrow(locs)))
@@ -2065,18 +2171,114 @@ server <- function(input, output, session) {
     switch(ext,
            csv = vroom::vroom(input$upload_spatial_pred$datapath, delim = ","),
            validate("Invalid file; Please upload a .csv file")) #Verify the data set is a csv file
-
   }) #upload spatial only prediction dataset
       
+  
+      validated_data_pred_spatial <- reactive({
+        
+        req(input$upload_spatial_pred)
+        
+        data <- read.csv(
+          input$upload_spatial_pred$datapath
+        )
+        
+        required_columns <- c('Latitude', 'Longitude', "ID")
+        column_names <- colnames(data)
+        
+        missing_columns <- setdiff(required_columns, column_names)
+        
+        if (length(missing_columns) > 0) {
+          validate(
+            need(
+              FALSE,
+              paste0(
+                "Missing required columns: ",
+                paste(missing_columns, collapse = ", ")
+              )
+            )
+          )}
+        
+        # Columns that must be numeric
+        numeric_columns <- c(
+          "Latitude",
+          "Longitude"
+        )
+        
+        # Check which columns are not numeric
+        non_numeric_columns <- numeric_columns[
+          !sapply(data[numeric_columns], is.numeric)
+        ]
+        
+        if (length(non_numeric_columns) > 0) {
+          validate(
+            need(
+              FALSE,
+              paste0(
+                "The following columns must be numeric: ",
+                paste(non_numeric_columns, collapse = ", ")
+              )
+            )
+          )
+        }
+        
+        # Check that latitude values are valid
+        invalid_latitude <- which(
+          is.na(data$Latitude) |
+            data$Latitude < -90 |
+            data$Latitude > 90
+        )
+        
+        if (length(invalid_latitude) > 0) {
+          validate(
+            need(
+              FALSE,
+              paste0(
+                "Invalid Latitude values found in row(s): ",
+                paste(invalid_latitude, collapse = ", "),
+                ". Latitude must be between -90 and 90."
+              )
+            )
+          )
+        }
+        
+        # Check that longitude values are valid
+        invalid_longitude <- which(
+          is.na(data$Longitude) |
+            data$Longitude < -180 |
+            data$Longitude > 180
+        )
+        
+        if (length(invalid_longitude) > 0) {
+          validate(
+            need(
+              FALSE,
+              paste0(
+                "Invalid Longitude values found in row(s): ",
+                paste(invalid_longitude, collapse = ", "),
+                ". Longitude must be between -180 and 180."
+              )
+            )
+          )
+        }
+        
+        data
+      }) #changed  
+          
+      output$contents_spatial <- renderText({
+        validated_data_pred_spatial()
+        
+        " "
+      })#changed     
       
+
   ### IDW Prediction  ### ----------------------------------------------------------------------    
       
   pred_idw <- eventReactive(input$run_pred_idw, {  
-    pred.locs <- data_pred_spatial()
+    pred.locs <- validated_data_pred_spatial()
     data <- data()
     
-    m <- st_as_sf(data, coords = c("Longitude", "Latitude"), crs = 28992)
-    m2 <- st_as_sf(pred.locs, coords = c("Longitude", "Latitude"), crs = 28992)
+    m <- st_as_sf(data, coords = c("Longitude", "Latitude"), crs = 4326)
+    m2 <- st_as_sf(pred.locs, coords = c("Longitude", "Latitude"), crs = 4326)
     
     idw_result <- idw(
       formula = logPM2.5 ~ 1,
@@ -2124,7 +2326,7 @@ server <- function(input, output, session) {
           paste("predictions-", Sys.Date(), ".csv", sep="")
         },
         content = function(file) {
-          pred <- data.frame(data_pred_spatial()[,c("site_id", "Longitude","Latitude")], predicted = pred_idw()$var1.pred)
+          pred <- data.frame(validated_data_pred_spatial()[,c("ID", "Longitude","Latitude")], predicted = pred_idw()$var1.pred)
           write.csv(pred, file)
         }
       ) #Download Spatial GP Predictions -----------------------------------------------------------------------------------------------------------------
@@ -2145,7 +2347,7 @@ server <- function(input, output, session) {
   model_pred_spatial <- eventReactive(input$run_pred_space_exp, {
     if (current_selection() == "Exponential Isotropic") {
       
-    pred.locs <- data_pred_spatial()
+    pred.locs <- validated_data_pred_spatial() #changed
 
     longlat_pred<-pred.locs[,c("Longitude","Latitude")]
     locs_pred<-as.matrix(cbind(longlat_pred))
@@ -2164,7 +2366,7 @@ server <- function(input, output, session) {
     
     if (current_selection() == "Matern Isotropic") {
       
-    pred.locs <- data_pred_spatial()
+      pred.locs <- validated_data_pred_spatial() #changed
 
     longlat_pred<-pred.locs[,c("Longitude","Latitude")]
     locs_pred<-as.matrix(cbind(longlat_pred))
@@ -2215,11 +2417,11 @@ server <- function(input, output, session) {
     filename = function() {
       paste("predictions-", Sys.Date(), ".csv", sep="")
     },
-    content = function(file) {
+    content = function(file) { #changed
       if (current_selection() == "Exponential Isotropic") {
-        pred <- data.frame(data_pred_spatial()[,c("site_id", "Longitude","Latitude")], predicted = model_pred_spatial()[,"predicted"])
+        pred <- data.frame(validated_data_pred_spatial()[,c("ID", "Longitude","Latitude")], predicted = model_pred_spatial()[,"predicted"])
       } else if (current_selection() == "Matern Isotropic") {
-        pred <- data.frame(data_pred_spatial()[,c("site_id", "Longitude","Latitude")], predicted = model_pred_spatial2()[,"predicted"])
+        pred <- data.frame(validated_data_pred_spatial()[,c("ID", "Longitude","Latitude")], predicted = model_pred_spatial2()[,"predicted"])
       }
       write.csv(pred, file)
     }
@@ -2248,10 +2450,106 @@ server <- function(input, output, session) {
 
   }) #upload spatial-temporal prediction dataset ------------------------------------------------------------------------------------------------------
 
-
+  validated_data_pred_st <- reactive({
+    
+    req(input$upload_st_pred)
+    
+    data <- read.csv(
+      input$upload_st_pred$datapath
+    )
+    
+    required_columns <- c('Latitude', 'Longitude', "ID", "t")
+    column_names <- colnames(data)
+    
+    missing_columns <- setdiff(required_columns, column_names)
+    
+    if (length(missing_columns) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Missing required columns: ",
+            paste(missing_columns, collapse = ", ")
+          )
+        )
+      )}
+    
+    # Columns that must be numeric
+    numeric_columns <- c(
+      "Latitude",
+      "Longitude",
+      "t"
+    )
+    
+    # Check which columns are not numeric
+    non_numeric_columns <- numeric_columns[
+      !sapply(data[numeric_columns], is.numeric)
+    ]
+    
+    if (length(non_numeric_columns) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "The following columns must be numeric: ",
+            paste(non_numeric_columns, collapse = ", ")
+          )
+        )
+      )
+    }
+    
+    # Check that latitude values are valid
+    invalid_latitude <- which(
+      is.na(data$Latitude) |
+        data$Latitude < -90 |
+        data$Latitude > 90
+    )
+    
+    if (length(invalid_latitude) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Invalid Latitude values found in row(s): ",
+            paste(invalid_latitude, collapse = ", "),
+            ". Latitude must be between -90 and 90."
+          )
+        )
+      )
+    }
+    
+    # Check that longitude values are valid
+    invalid_longitude <- which(
+      is.na(data$Longitude) |
+        data$Longitude < -180 |
+        data$Longitude > 180
+    )
+    
+    if (length(invalid_longitude) > 0) {
+      validate(
+        need(
+          FALSE,
+          paste0(
+            "Invalid Longitude values found in row(s): ",
+            paste(invalid_longitude, collapse = ", "),
+            ". Longitude must be between -180 and 180."
+          )
+        )
+      )
+    }
+    
+    data
+  }) #changed
+  
+  output$contents_st <- renderText({
+    validated_data_pred_st()
+    
+    " "
+  })#changed   
+  
   model_pred_st <- eventReactive(input$run_pred_st, {
     if (current_selection() == "Exponential Space-Time") {
-    pred.locs <- data_pred_st()[,-1]
+    pred.locs <- validated_data_pred_st()[,-1] #changed
 
     t_pred<-pred.locs[,"t"]
     longlat_pred<-pred.locs[,c("Longitude","Latitude")]
@@ -2267,7 +2565,7 @@ server <- function(input, output, session) {
   
   model_pred_st2 <- eventReactive(input$run_pred_st, {
     if (current_selection() == "Matern Space-Time") {
-    pred.locs <- data_pred_st()[,-1]
+    pred.locs <- validated_data_pred_st()[,-1] #changed
     
     t_pred<-pred.locs[,"t"]
     longlat_pred<-pred.locs[,c("Longitude","Latitude")]
@@ -2284,10 +2582,10 @@ server <- function(input, output, session) {
   output$predictions_plot <- renderPlotly({
     
     if (current_selection() == "Exponential Space-Time") {
-      dat <- data.frame(data_pred_st()[,c("site_id", "Longitude","Latitude", "t")],  predicted = model_pred_st()[,"predicted"])
+      dat <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")],  predicted = model_pred_st()[,"predicted"])
     } else if (current_selection() == "Matern Space-Time") {
-      dat <- data.frame(data_pred_st()[,c("site_id", "Longitude","Latitude", "t")],  predicted = model_pred_st2()[,"predicted"])
-    }
+      dat <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")],  predicted = model_pred_st2()[,"predicted"])
+    } #changed
 
     plot_ly(
     data = dat,
@@ -2318,11 +2616,11 @@ server <- function(input, output, session) {
     filename = function() {
       paste("predictions-", Sys.Date(), ".csv", sep="")
     },
-    content = function(file) {
+    content = function(file) { #changed
       if (current_selection() == "Exponential Space-Time") {
-      pred <- data.frame(data_pred_st()[,c("site_id", "Longitude","Latitude", "t")], predicted = model_pred_st()[,"predicted"])
+        pred <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")], predicted = model_pred_st()[,"predicted"])
       } else if (current_selection() == "Matern Space-Time"){
-        pred <- data.frame(data_pred_st()[,c("site_id", "Longitude","Latitude", "t")], predicted = model_pred_st2()[,"predicted"])
+        pred <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")], predicted = model_pred_st2()[,"predicted"])
       }
       write.csv(pred, file, row.names = FALSE)
     } 
@@ -2429,11 +2727,11 @@ server <- function(input, output, session) {
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     rmse <- Metrics::rmse(pred$logPM2.5, pred$predicted)
@@ -2453,11 +2751,11 @@ server <- function(input, output, session) {
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     mae <- Metrics::mae(pred$logPM2.5, pred$predicted)
@@ -2477,11 +2775,11 @@ server <- function(input, output, session) {
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("site_id", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("site_id", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     cor <- cor(pred$logPM2.5, pred$predicted)
