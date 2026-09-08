@@ -64,10 +64,10 @@ ui <- navbarPage(
              br(),
              
              p(icon("anchor-lock"), strong("Notes on Data Privacy"), style = "font-size: 20px; color: black;"), #BEGIN DATA PRIVACY SECTION --------
-             tags$ul(
-               tags$li("Any uploaded data will only be stored during usage of AQShiny. Once you exit from the application data and and models ran will not be saved anywhere.", style = "font-size: 18px; color: black;"),
-               tags$li("This also means that if you have to reload the webpage during usage, all progress will be lost.", style = "font-size: 18px; color: black;")
-               
+             tags$ul( #changed
+               tags$li("Files uploaded to AQ-Shiny are transmitted to Posit Connect Cloud for analysis. Posit Connect Cloud does not intentionally retain uploaded datasets or fitted models after the user session. However, uploaded information is processed within the hosting infrastructure and may be subject to the hosting provider's security, logging, and data-retention policies.", style = "font-size: 18px; color: black;"),
+               tags$li("This also means that if you have to reload the webpage during usage, all progress will be lost.", style = "font-size: 18px; color: black;"),
+               tags$li("Do not upload personally identifiable, confidential, protected-health, or other sensitive or regulated information.", style = "font-size: 18px; color: black;"),
              ), #END DATA PRIVACY SECTION ----------------------------------------------------------------------------------------------------------
              
              br(),
