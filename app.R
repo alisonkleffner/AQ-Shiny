@@ -28,18 +28,19 @@ ui <- navbarPage(
            
            helpText( # BEGIN helptext ----------------------------------------------------------------------------------------------------------
                      
-             p("Welcome to AQ-Shiny, a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models.", style = "font-size: 22px; color: black;"),
-             
-             p(icon("magnifying-glass"), strong("Key Features:"), style = "font-size: 20px; color: black;"), #BEGIN FEATURES SECTION ------------
-             tags$ul(
-               tags$li("End-to-end workflow: data upload → modeling → prediction → visualization", style = "font-size: 18px; color: black;"),
-               tags$li("Flexible Gaussian process modeling with multiple covariance functions", style = "font-size: 18px; color: black;"),
-               tags$li("Comparison of models (IDW vs GP) using RMSE, MAE, and Correlation", style = "font-size: 18px; color: black;"),
-               tags$li("Spatiotemporal modeling (separable, product–sum)", style = "font-size: 18px; color: black;"),
-               #tags$li("Uncertainty-aware prediction maps", style = "font-size: 18px; color: black;"),
-               #tags$li("Exportable results and reproducible reports", style = "font-size: 18px; color: black;")
-               tags$li("Exportable results", style = "font-size: 18px; color: black;")
-               ), #END FEATURES SECTION ----------------------------------------------------------------------------------------------------------
+                     p("Welcome to AQ-Shiny, a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models.", style = "font-size: 22px; color: black;"), #changed
+                     #p("Welcome to AQ-Shiny, a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models with built-in uncertainty quantification.", style = "font-size: 22px; color: black;"),
+                     
+                     p(icon("magnifying-glass"), strong("Key Features:"), style = "font-size: 20px; color: black;"), #BEGIN FEATURES SECTION ------------
+                     tags$ul(
+                       tags$li("End-to-end workflow: data upload → modeling → prediction → visualization", style = "font-size: 18px; color: black;"),
+                       tags$li("Flexible Gaussian process modeling with multiple covariance functions", style = "font-size: 18px; color: black;"),
+                       tags$li("Comparison of models (IDW vs GP) using RMSE, MAE, and Correlation", style = "font-size: 18px; color: black;"),
+                       tags$li("Spatio-temporal modeling (separable, product–sum)", style = "font-size: 18px; color: black;"),
+                       #tags$li("Uncertainty-aware prediction maps", style = "font-size: 18px; color: black;"), #changed
+                       #tags$li("Exportable results and reproducible reports", style = "font-size: 18px; color: black;")
+                       tags$li("Exportable results", style = "font-size: 18px; color: black;")
+                     ), #END FEATURES SECTION ----------------------------------------------------------------------------------------------------------
              
              br(),
              
@@ -48,7 +49,8 @@ ui <- navbarPage(
                tags$li("Upload Data: Load your dataset (CSV format with location, time, and PM2.5 values)", style = "font-size: 18px; color: black;"),
                tags$li("Visualize Data: Explore spatial and temporal patterns interactively", style = "font-size: 18px; color: black;"),
                tags$li("Select Model: Choose between IDW or Gaussian Process models and compare covariance structures", style = "font-size: 18px; color: black;"),
-               tags$li("Generate Predictions: Create spatial or spatiotemporal prediction maps with uncertainty", style = "font-size: 18px; color: black;"),
+               tags$li("Generate Predictions: Create spatial or spatio-temporal prediction maps", style = "font-size: 18px; color: black;"), #changed
+               #tags$li("Generate Predictions: Create spatial or spatio-temporal prediction maps with uncertainty", style = "font-size: 18px; color: black;"),
                tags$li("Compare Models: Evaluate performance using RMSE, MAE, Correlation", style = "font-size: 18px; color: black;")
              ), #END WORKFLOW SECTION ------------------------------------------------------------------------------------------------------------
              
