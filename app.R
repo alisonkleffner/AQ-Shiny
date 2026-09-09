@@ -98,7 +98,7 @@ ui <- navbarPage(
                           tags$li("ID: ID for location", style = "font-size: 16px; color: black"),
                           tags$li("Longitude", style = "font-size: 16px; color: black"),
                           tags$li("Latitude", style = "font-size: 16px; color: black"),
-                          tags$li("logPM2.5", style = "font-size: 16px; color: black"),
+                          tags$li("PM2.5", style = "font-size: 16px; color: black"),
                           tags$li("t: time (if doing a Spatio-Temporal Analysis)", style = "font-size: 16px; color: black")
                         ), # END EXPLANATION OF DATASET COLUMNS ------------------------------------------------------------------------------------  
                         
@@ -194,8 +194,8 @@ ui <- navbarPage(
                             
                                       tags$ul(
                                               tags$li("Each point is related to a location of a sensor", style = "font-size: 18px; color: black"),
-                                              tags$li("Points colors are related to their logPM2.5 values", style = "font-size: 18px; color: black"),
-                                              tags$li("You can hover over a point to obtain the specific logPM2.5 value for that location.", style = "font-size: 18px; color: black"),
+                                              tags$li("Points colors are related to their PM2.5 values", style = "font-size: 18px; color: black"),
+                                              tags$li("You can hover over a point to obtain the specific PM2.5 value for that location.", style = "font-size: 18px; color: black"),
                                               tags$li("You can zoom in and zoom out of the map using the controls in the upper right hand corner.", style = "font-size: 18px; color: black")
                                             ),
                                        br(),
@@ -216,7 +216,7 @@ ui <- navbarPage(
                            p(strong("Plot Descriptions: "), style = "font-size: 16px; color: black"),
                           tags$ul(
                             tags$li("Space Over Time: Animation of sensor locations where the color of the point changes over time based on new measurements.", style = "font-size: 16px; color: black;"),
-                            tags$li("Time Over Space: Plot of sensor locations where hovering over a sensor location provides a time series of the change in LogPM2.5 at that location. This may take awhile to render.", style = "font-size: 16px; color: black;")
+                            tags$li("Time Over Space: Plot of sensor locations where hovering over a sensor location provides a time series of the change in PM2.5 at that location. This may take awhile to render.", style = "font-size: 16px; color: black;")
                           ), #END LIST OF PLOT DESCRIPTIONS
                            br(),
                           ), #END HELP TEXT FOR PLOT DESCRIPTIONS
@@ -839,6 +839,8 @@ ui <- navbarPage(
                
                div(class = "small-checkbox", checkboxInput("rmse", "Calculate the Root Mean Square Error (RMSE)", FALSE)), #RMSE checkbox
                div(class = "small-checkbox", checkboxInput("mae", "Calculate the Mean Absolute Error (MAE)", FALSE)), #MAE checkbox
+               div(class = "small-checkbox", checkboxInput("bias", "Calculate the Bias", FALSE)), #bias checkbox
+               div(class = "small-checkbox", checkboxInput("predr2", HTML("Predictive R<sup>2</sup>"), FALSE)), #predictive r2 checkbox
                div(class = "small-checkbox", checkboxInput("corr", "Calculate the Correlation Between Actual & Predicted Values", FALSE)), #Correlation Checkbox
                
               uiOutput("show_comp_button") #Make button available once data set uploaded.
@@ -859,6 +861,14 @@ ui <- navbarPage(
                                 uiOutput("mae_info")
                ), #CONDITONAL PANEL FOR MAE INFO -------------------------------------------------------------------------------------------------
                
+               conditionalPanel(condition = "input.run_model_comp_but == 0 && input.bias == true",
+                                uiOutput("bias_info")
+               ), #CONDITONAL PANEL FOR bias INFO -------------------------------------------------------------------------------------------------
+               
+               conditionalPanel(condition = "input.run_model_comp_but == 0 && input.predr2 == true",
+                                uiOutput("predr2_info")
+               ), #CONDITONAL PANEL FOR PRED R2 INFO -------------------------------------------------------------------------------------------------
+               
                conditionalPanel(condition = "input.run_model_comp_but == 0 && input.corr == true",
                                 uiOutput("corr_info")
                ), #CONDITONAL PANEL FOR CORR INFO -------------------------------------------------------------------------------------------------
@@ -869,6 +879,14 @@ ui <- navbarPage(
                
                conditionalPanel(condition = "input.run_model_comp_but > 0 && input.mae == true",
                                 tableOutput("mae_table") 
+               ), #CONDITONAL PANEL FOR MAE TABLE -------------------------------------------------------------------------------------------------
+               
+               conditionalPanel(condition = "input.run_model_comp_but > 0 && input.bias == true",
+                                tableOutput("bias_table") 
+               ), #CONDITONAL PANEL FOR MAE TABLE -------------------------------------------------------------------------------------------------
+               
+               conditionalPanel(condition = "input.run_model_comp_but > 0 && input.predr2 == true",
+                                tableOutput("predr2_table") 
                ), #CONDITONAL PANEL FOR MAE TABLE -------------------------------------------------------------------------------------------------
                
                conditionalPanel(condition = "input.run_model_comp_but > 0 && input.corr == true",
@@ -977,7 +995,7 @@ server <- function(input, output, session) {
       input$upload$datapath
     )
     
-    required_columns <- c('Latitude', 'Longitude', "logPM2.5", "ID")
+    required_columns <- c('Latitude', 'Longitude', "PM2.5", "ID")
     column_names <- colnames(data)
     
     missing_columns <- setdiff(required_columns, column_names)
@@ -997,7 +1015,7 @@ server <- function(input, output, session) {
     numeric_columns <- c(
       "Latitude",
       "Longitude",
-      "logPM2.5"
+      "PM2.5"
     )
     
     # Check which columns are not numeric
@@ -1070,7 +1088,7 @@ server <- function(input, output, session) {
    data <- validated_data()
    
    data %>%
-     select("ID", "Latitude", "Longitude", "logPM2.5")
+     select("ID", "Latitude", "Longitude", "PM2.5")
    
   }, rownames = FALSE) # Create Raw Data Table for Spatial Data --------------------------------------------------------------------------
   
@@ -1079,8 +1097,8 @@ server <- function(input, output, session) {
     
     data %>%
       summarise("Number of Locations" = n(),
-                "Average of LogPM2.5" = round(mean(logPM2.5, na.rm = TRUE), 4),
-                "Standard deviation of LogPM2.5" = round(sd(logPM2.5, na.rm = TRUE), 4))
+                "Average of PM2.5" = round(mean(PM2.5, na.rm = TRUE), 4),
+                "Standard deviation of PM2.5" = round(sd(PM2.5, na.rm = TRUE), 4))
     
   }, rownames = FALSE, align = 'c')   # Create Summary Table for Spatial Data -------------------------------------------------------------
 
@@ -1088,8 +1106,8 @@ server <- function(input, output, session) {
     data <- validated_data()
     
     data %>%
-      select("ID", "Latitude", "Longitude", "t", "logPM2.5") %>% 
-      mutate(across(c(t, logPM2.5), round, digits = 4))
+      select("ID", "Latitude", "Longitude", "t", "PM2.5") %>% 
+      mutate(across(c(t, PM2.5), round, digits = 4))
     
   }, rownames = FALSE) # Create Raw Data Table for ST Data --------------------------------------------------------------------------------
 
@@ -1101,8 +1119,8 @@ server <- function(input, output, session) {
       summarise("Number of Measurements" = n(),
                 "Average Latitude" = round(mean(Latitude),4),
                 "Average Longitude" = round(mean(Longitude),4),
-                "Average of LogPM2.5" = round(mean(logPM2.5, na.rm = TRUE), 4),
-                "Standard deviation of LogPM2.5" = round(sd(logPM2.5, na.rm = TRUE), 4))
+                "Average of PM2.5" = round(mean(PM2.5, na.rm = TRUE), 4),
+                "Standard deviation of PM2.5" = round(sd(PM2.5, na.rm = TRUE), 4))
     
   }, rownames = FALSE)  # Create Summary Table for ST Data ---------------------------------------------------------------------------------
   
@@ -1135,11 +1153,11 @@ server <- function(input, output, session) {
       lat = ~Latitude,
       type = 'scattermapbox',
       mode = 'markers',
-      color = ~logPM2.5, # Color by a categorical variable, e.g., status
+      color = ~PM2.5, # Color by a categorical variable, e.g., status
       colors = viridis::cividis(n = 100), #color blind friendly palette
       marker = list(size = 10, opacity = 0.8),
       showlegend = FALSE,
-      text = ~paste("logPM2.5: ", round(logPM2.5, 4)),
+      text = ~paste("PM2.5: ", round(PM2.5, 4)),
       hoverinfo = "text"
     ) %>%
       layout(
@@ -1186,7 +1204,7 @@ server <- function(input, output, session) {
     colors = viridis::cividis(n = 100), #use color blind friendly palette
     marker = list(size = 10, opacity = 0.8), #aesthetics for point markers
     showlegend = FALSE, 
-    text = ~paste(`logPM2.5: `, round(response_column_name, 4)), #information to display when over over a point rounded to 4 decimals
+    text = ~paste(`PM2.5: `, round(response_column_name, 4)), #information to display when over over a point rounded to 4 decimals
     hoverinfo = `text`) %>% #information to display when over over a point
     layout(
       mapbox = list(
@@ -1211,7 +1229,7 @@ server <- function(input, output, session) {
       #                         names_to = "variable",
       #                         values_to = "value")
       
-      filter_meuse <- dat[,c("t", "Longitude", "Latitude", "logPM2.5")] #changed
+      filter_meuse <- dat[,c("t", "Longitude", "Latitude", "PM2.5")] #changed
       
       plot_ly(
         data = filter_meuse,
@@ -1219,12 +1237,12 @@ server <- function(input, output, session) {
         lat = ~Latitude,
         type = 'scattermapbox',
         mode = 'markers',
-        color = ~logPM2.5, # Color by a categorical variable, e.g., status
+        color = ~PM2.5, # Color by a categorical variable, e.g., status
         colors = viridis::cividis(n = 100),
         frame = ~t, # Animate across time points #changed
         marker = list(size = 10, opacity = 0.8),
         showlegend = FALSE,
-        text = ~paste("logPM2.5: ", round(logPM2.5, 4)),
+        text = ~paste("PM2.5: ", round(PM2.5, 4)),
         hoverinfo = "text"
       ) %>%
         layout(
@@ -1259,7 +1277,7 @@ server <- function(input, output, session) {
     frame = ~time_column_name, # Animate across time points
     marker = list(size = 10, opacity = 0.8), #aesthetics for point markers
     showlegend = FALSE, 
-    text = ~paste(`logPM2.5: `, round(response_column_name, 4)), #information to display when over over a point rounded to 4 decimals
+    text = ~paste(`PM2.5: `, round(response_column_name, 4)), #information to display when over over a point rounded to 4 decimals
     hoverinfo = `text`) %>% #information to display when over over a point
     layout(
       mapbox = list(
@@ -1308,14 +1326,14 @@ server <- function(input, output, session) {
   }) #Create Pop-Up to warn people this plot may take awhile to render -----------------------------------------------------------------
 
   makePopupPlot <- function (clickedArea, df) {
-    plotData <- df[c("ID", "t","logPM2.5", "Latitude", "Longitude")] #changed
+    plotData <- df[c("ID", "t","PM2.5", "Latitude", "Longitude")] #changed
     plotDataSubset <- subset(plotData, plotData['ID'] == clickedArea)
     
-    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = logPM2.5)) + #changed
+    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = PM2.5)) + #changed
       geom_point() +
       geom_line(group = 1) +
       xlab("Time") +
-      ggtitle(paste0("Time Series of logPM2.5 in ", clickedArea)) +
+      ggtitle(paste0("Time Series of PM2.5 in ", clickedArea)) +
       theme(legend.position = "none",
             axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
       theme(plot.margin = unit(c(0,0.5,0,0), "cm"), plot.title = element_text(size = 10))
@@ -1368,14 +1386,14 @@ server <- function(input, output, session) {
     cat("library(leaflet)\n")
     
     cat("makePopupPlot <- function(clickedArea, df) { ##create an individual time series plot for one sensor location
-    plotData <- df[c('ID', 't', 'logPM2.5', 'Latitude', 'Longitude')]
+    plotData <- df[c('ID', 't', 'PM2.5', 'Latitude', 'Longitude')]
     plotDataSubset <- subset(plotData, plotData['ID'] == clickedArea)
 
-    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = logPM2.5)) + 
+    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = PM2.5)) + 
       geom_point() +
       geom_line(group = 1) +
       xlab('Time') +
-      ggtitle(paste0('Time Series of logPM2.5 in ', clickedArea)) +
+      ggtitle(paste0('Time Series of PM2.5 in ', clickedArea)) +
       theme(legend.position = 'none',
             axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
       theme(plot.margin = unit(c(0,0.5,0,0), 'cm'), plot.title = element_text(size = 10))
@@ -1493,7 +1511,7 @@ server <- function(input, output, session) {
     
     grid_sf <- st_sf(geometry = grid) # Convert to sf
     
-    idw_result <- idw(formula = logPM2.5 ~ 1,
+    idw_result <- idw(formula = PM2.5 ~ 1,
                   locations = pts_proj, newdata = grid_sf,
                   idp = input$idw_power
                   ) # Run IDW
@@ -1519,7 +1537,7 @@ server <- function(input, output, session) {
       type = "scattermapbox",
       mode = "markers",
       marker = list(size = 6),
-      text = ~paste("logPM2.5:", round(var1.pred, 4)),
+      text = ~paste("PM2.5:", round(var1.pred, 4)),
       hoverinfo = "text"
     ) %>%
       layout(
@@ -1569,7 +1587,7 @@ server <- function(input, output, session) {
     
     cat("\n Run IDW: \n")
     
-    cat("\n idw(formula = logPM2.5 ~ 1,
+    cat("\n idw(formula = PM2.5 ~ 1,
                   locations = pts_proj, newdata = grid_sf,
                   idp = input$idw_power
                   )")
@@ -1653,7 +1671,7 @@ server <- function(input, output, session) {
     add_busy_spinner(spin = "cube-grid")
 
     locs <- as.matrix(data_new[, c("Longitude", "Latitude")])
-    response  <- data_new$logPM2.5
+    response  <- data_new$PM2.5
 
     X <- matrix(1, nrow(locs), 1) # Intercept-only mean model
 
@@ -1789,7 +1807,7 @@ server <- function(input, output, session) {
       }
 
     locs <- as.matrix(data_new[, c("Longitude", "Latitude")])
-    response  <- data_new$logPM2.5
+    response  <- data_new$PM2.5
 
     # Intercept-only mean model
     X <- matrix(1, nrow(locs), 1)
@@ -1902,7 +1920,7 @@ server <- function(input, output, session) {
     add_busy_spinner(spin = "cube-grid")
     loc <- data[,c("Longitude","Latitude","t")]
     locs <- as.matrix(loc)
-    response <- as.matrix(data[,c("logPM2.5")])
+    response <- as.matrix(data[,c("PM2.5")])
     X <- as.matrix( rep(1,nrow(locs)))
 
     if(is.na(input$start_var) & is.na(input$start_spatial) & is.na(input$start_time) & is.na(input$start_nugget)){
@@ -1924,7 +1942,7 @@ server <- function(input, output, session) {
     
     cat(" loc <- data[,c('Longitude','Latitude','t')]
  locs <- as.matrix(loc)
- response <- as.matrix(data[,c('logPM2.5')])
+ response <- as.matrix(data[,c('PM2.5')])
  X <- as.matrix( rep(1,nrow(locs)))
 
  fit_model(y = response,
@@ -2032,7 +2050,7 @@ server <- function(input, output, session) {
     add_busy_spinner(spin = "cube-grid")
     loc <- data[,c("Longitude","Latitude","t")]
     locs <- as.matrix(loc)
-    response <- as.matrix(data[,c("logPM2.5")])
+    response <- as.matrix(data[,c("PM2.5")])
     X <- as.matrix( rep(1,nrow(locs)))
     
     if(is.na(input$start_var_st_matern) & is.na(input$start_spatial_st_matern) & is.na(input$start_time_st_matern)& is.na(input$start_smooth_st_matern) & is.na(input$start_nugget_st_matern)){
@@ -2054,7 +2072,7 @@ server <- function(input, output, session) {
     
     cat(" loc <- data[,c('Longitude','Latitude','t')]
  locs <- as.matrix(loc)
- response <- as.matrix(data[,c('logPM2.5')])
+ response <- as.matrix(data[,c('PM2.5')])
  X <- as.matrix( rep(1,nrow(locs)))
 
  fit_model(y = response,
@@ -2319,7 +2337,7 @@ server <- function(input, output, session) {
     m2 <- st_as_sf(pred.locs, coords = c("Longitude", "Latitude"), crs = 4326)
     
     idw_result <- idw(
-      formula = logPM2.5 ~ 1,
+      formula = PM2.5 ~ 1,
       locations = m,
       newdata = m2,
       idp = input$idw_power
@@ -2343,7 +2361,7 @@ server <- function(input, output, session) {
           type = "scattermapbox",
           mode = "markers",
           marker = list(size = 6),
-          text = ~paste("logPM2.5:", round(var1.pred, 4)),
+          text = ~paste("PM2.5:", round(var1.pred, 4)),
           hoverinfo = "text"
         ) %>%
           layout(
@@ -2436,7 +2454,7 @@ server <- function(input, output, session) {
       color = ~predicted, # Color by a categorical variable, e.g., status
       marker = list(size = 10, opacity = 0.8),
       showlegend = FALSE,
-      text = ~paste("Predicted logPM2.5: ", round(predicted, 4)),
+      text = ~paste("Predicted PM2.5: ", round(predicted, 4)),
       hoverinfo = "text"
     ) %>%
       layout(
@@ -2635,7 +2653,7 @@ server <- function(input, output, session) {
     frame = ~t, # Animate across time points
     marker = list(size = 10, opacity = 0.8),
     showlegend = FALSE,
-    text = ~paste("logPM2.5: ", round(predicted, 4)),
+    text = ~paste("PM2.5: ", round(predicted, 4)),
     hoverinfo = "text"
   ) %>%
     layout(
@@ -2688,7 +2706,7 @@ server <- function(input, output, session) {
       tagList(rv$controls),
       
       helpText(
-        p(strong("Note:"), "To be able to calculate Model Comparison Metrics, your dataset uploaded in the", strong("Prediction"), "tab must have a column called logPM2.5. Metrics will only be able to be calculated for Models which you have predicted on.", style = "color: black; font-size: 16px"
+        p(strong("Note:"), "To be able to calculate Model Comparison Metrics, your dataset uploaded in the", strong("Prediction"), "tab must have a column called PM2.5. Metrics will only be able to be calculated for Models which you have predicted on.", style = "color: black; font-size: 16px"
         ), 
         br()),
     )
@@ -2711,6 +2729,22 @@ server <- function(input, output, session) {
     withMathJax(
       helpText(strong("Mathematical Formulation:", style = "color: black;"),
                tags$p(HTML("$$\\text{MAE} = \\frac{1}{n} \\sum^{n}_{i=1}|y_i - \\hat{y}_i|$$"), style = "color: black;")
+      ) #End HelpText
+    ) #end mathjax
+  }) ## INFO ON MAE ----------------------------------------------------------------------------------------------------------------------------
+  
+  output$bias_info <- renderUI({
+    withMathJax(
+      helpText(strong("Mathematical Formulation:", style = "color: black;"),
+               tags$p(HTML("$$\\text{Bias} = \\frac{1}{n} \\sum^{n}_{i=1}(y_i - \\hat{y}_i)$$"), style = "color: black;")
+      ) #End HelpText
+    ) #end mathjax
+  }) ## INFO ON MAE ----------------------------------------------------------------------------------------------------------------------------
+  
+  output$predr2_info <- renderUI({
+    withMathJax(
+      helpText(strong("Mathematical Formulation:", style = "color: black;"),
+               tags$p(HTML("$$R^2_{pred} = 1 - \\frac{\\sum_{i=1}^{n}(y_i - \\hat{y}_i)^2}{\\sum_{i=1}^{n}(y_i - \\bar{y})^2}$$"), style = "color: black;")
       ) #End HelpText
     ) #end mathjax
   }) ## INFO ON MAE ----------------------------------------------------------------------------------------------------------------------------
@@ -2759,20 +2793,38 @@ server <- function(input, output, session) {
     )
   )
   
+  results4 <- reactiveValues(
+    history = data.frame(
+      Model = character(),
+      Bias = numeric(),
+      Timestamp = as.POSIXct(character()),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  results5 <- reactiveValues(
+    history = data.frame(
+      Model = character(),
+      Preditive_R2 = numeric(),
+      Timestamp = as.POSIXct(character()),
+      stringsAsFactors = FALSE
+    )
+  )
+  
   observeEvent(input$run_model_comp_but, {
     req(current_selection2())
     sel <- current_selection2()
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
-    rmse <- Metrics::rmse(pred$logPM2.5, pred$predicted)
+    rmse <- Metrics::rmse(pred$PM2.5, pred$predicted)
     
     results$history <- rbind(
       results$history,
@@ -2789,14 +2841,14 @@ server <- function(input, output, session) {
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
-    mae <- Metrics::mae(pred$logPM2.5, pred$predicted)
+    mae <- Metrics::mae(pred$PM2.5, pred$predicted)
     
     results2$history <- rbind(
       results2$history,
@@ -2813,14 +2865,14 @@ server <- function(input, output, session) {
     
     pred <- switch(
       sel,
-      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
-    cor <- cor(pred$logPM2.5, pred$predicted)
+    cor <- cor(pred$PM2.5, pred$predicted)
     
     results3$history <- rbind(
       results3$history,
@@ -2830,6 +2882,54 @@ server <- function(input, output, session) {
       )
     )
   })
+  
+  observeEvent(input$run_model_comp_but, { #NEW
+    req(current_selection2())
+    sel <- current_selection2()
+    
+    pred <- switch(
+      sel,
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st2()[, "predicted"])
+    )
+    
+    bias <- bias(pred$PM2.5, pred$predicted)
+    
+    results4$history <- rbind(
+      results4$history,
+      data.frame(
+        Model = sel,
+        Bias = round(bias, 7)
+      )
+    )
+  }) #NEW
+  
+  observeEvent(input$run_model_comp_but, { #NEW
+    req(current_selection2())
+    sel <- current_selection2()
+    
+    pred <- switch(
+      sel,
+      "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = pred_idw()$var1.pred),
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "PM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "PM2.5")], predicted = model_pred_st2()[, "predicted"])
+    )
+    
+    predr2 <- 1 - (sum((pred$PM2.5 - pred$predicted)^2) /sum((pred$PM2.5 - mean(pred$PM2.5))^2))
+    
+    results5$history <- rbind(
+      results5$history,
+      data.frame(
+        Model = sel,
+        Preditive_R2 = round(predr2, 7)
+      )
+    )
+  }) #NEW
   
   output$rmse_table <- renderTable({
     df <- results$history
@@ -2846,6 +2946,18 @@ server <- function(input, output, session) {
   output$corr_table <- renderTable({
     df <- results3$history
     df$Correlation <- format(round(df$Correlation, 4), nsmall = 4)
+    df
+  })
+  
+  output$bias_table <- renderTable({
+    df <- results4$history
+    df$Bias <- format(round(df$Bias, 4), nsmall = 4)
+    df
+  })
+  
+  output$predr2_table <- renderTable({
+    df <- results5$history
+    df$Preditive_R2 <- format(round(df$Preditive_R2, 4), nsmall = 4)
     df
   })
   
