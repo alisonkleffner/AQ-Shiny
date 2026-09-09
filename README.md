@@ -8,11 +8,13 @@ AQ-Shiny is a web-based application intended for the exploration, comparison, an
 - app.R: Shiny app code for creation of AQ-Shiny
 - manifest.json: R Package information used in AQ-Shiny
 - example-data folder: some toy data sets so users can test out AQ-Shiny
+- Case Study Folder: Folder that replicates AQ-Shiny Output using data from the example-data folder to verify methods are consistent within and outside of application
 
 
 ### Instructions: Download AQ-Shiny on local computer
 
 To use AQ-Shiny on your own computer:
+
 - Download "app.R" which contains all of the code used to create AQ-Shiny. 
 - Version of R Packages used in creation of AQ-Shiny can be found in "manifest.json", so for best use of AQ-Shiny make sure necessary packages are updated to the proper version.
 - Open "app.R" in R Studio and click "Run App" to get AQ-Shiny to appear in a separate window.

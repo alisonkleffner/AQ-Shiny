@@ -1,0 +1,225 @@
+---
+title: "Spatial Case Study Code"
+format: html
+execute: 
+  warning: false
+  message: false
+---
+
+```{r}
+## Necessary R Packages
+library(GpGp)
+library(tidyverse)
+library(sp)
+library(sf)
+library(leaflet)
+library(plotly)
+library(leafpop)
+library(kableExtra)
+library(gstat)
+library(fields)
+library(Metrics)
+library(viridis)
+```
+
+### DATA UPLOAD TAB
+
+```{r}
+# Read in Data
+spatial_data <- read_csv("../example-data/spatial_only.csv")
+```
+
+```{r}
+#Calculate Summary Statistics
+spatial_data %>%
+  summarise("Number of Locations" = n(),
+            "Average of PM2.5" = round(mean(PM2.5, na.rm = TRUE), 2),
+            "Standard deviation of PM2.5" = round(sd(PM2.5, na.rm = TRUE), 2))
+```
+
+
+### VISUALIZATION TAB
+
+```{r}
+#Create Interactive Plot
+plot_ly(
+  data = spatial_data,
+  lon = ~Longitude,
+  lat = ~Latitude,
+  type = 'scattermapbox',
+  mode = 'markers',
+  color = ~PM2.5, # Color by a categorical variable, e.g., status
+  colors = viridis::cividis(n = 100), #color blind friendly palette
+  marker = list(size = 10, opacity = 0.8),
+  showlegend = FALSE,
+  text = ~paste("PM2.5: ", round(PM2.5, 4)),
+  hoverinfo = "text"
+  ) %>%
+  layout(
+    mapbox = list(
+    style = "open-street-map", #zoom into california
+    zoom = 5,
+    center = list(
+    lon = mean(spatial_data$Longitude),
+    lat = mean(spatial_data$Latitude)
+    )
+  )
+)
+```
+
+### MODELING TAB
+
+```{r}
+# Exponential Sphere Covariance Function  
+
+locs <- as.matrix(spatial_data[, c("Longitude", "Latitude")])
+response  <- spatial_data$PM2.5
+
+X <- matrix(1, nrow(locs), 1) # Intercept-only mean model
+
+fit_exp <- fit_model(
+  y = response,
+  locs = locs,
+  X = X,
+  covfun_name = "exponential_sphere", 
+  m_seq = c(15, 30), max_iter = 100,
+  convtol = 1e-05, reorder = TRUE,
+  silent = TRUE)
+
+fit_exp[["covparms"]]
+fit_exp$conv
+```
+
+```{r}
+# Matern Sphere Covariance Function  
+
+locs <- as.matrix(spatial_data[, c("Longitude", "Latitude")])
+response  <- spatial_data$PM2.5
+
+X <- matrix(1, nrow(locs), 1) # Intercept-only mean model
+
+fit_mat <- fit_model(
+  y = response,
+  locs = locs,
+  X = X,
+  covfun_name = "matern_sphere", 
+  m_seq = c(15, 30), max_iter = 100,
+  convtol = 1e-05, reorder = TRUE,
+  silent = TRUE)
+
+fit_mat[["covparms"]]
+fit_mat$conv
+```
+
+
+### PREDICTION TAB
+
+```{r}
+# Read in Prediction Data
+spatial_pred <- read_csv("../example-data/pred_locs_spatial.csv")
+```
+
+
+```{r}
+# Exponential Sphere Covariance Function  
+
+longlat_pred<-spatial_pred[,c("Longitude","Latitude")]
+locs_pred<-as.matrix(cbind(longlat_pred))
+X_pred <- as.matrix(rep(1,nrow(locs_pred)))
+
+prediction_exp <- predictions(fit_exp,locs_pred, X_pred, covparms = fit_exp$covparms, covfun_name = fit_exp$covfun_name, y_obs = fit_exp$y, locs_obs = fit_exp$locs, X_obs= fit_exp$X, beta=fit_exp$betahat, m = 60, reorder = TRUE)
+
+data_exp <- data.frame(Longitude = spatial_pred$Longitude, Latitude = spatial_pred$Latitude, predicted = prediction_exp)
+
+```
+
+```{r}
+#Plot of Exponential Sphere Covariance Function Prediction 
+
+plot_ly(
+  data = data_exp,
+  lon = ~Longitude,
+  lat = ~Latitude,
+  type = 'scattermapbox',
+  mode = 'markers',
+  color = ~predicted, # Color by a categorical variable, e.g., status
+  marker = list(size = 10, opacity = 0.8),
+  showlegend = FALSE,
+  text = ~paste("Predicted PM2.5: ", round(predicted, 4)),
+  hoverinfo = "text"
+) %>%
+  layout(
+    mapbox = list(
+    style = "open-street-map", #zoom into California
+    zoom = 4,
+    center = list(
+    lon = mean(data_exp$Longitude),
+    lat = mean(data_exp$Latitude)
+    )
+  )
+)
+```
+
+
+```{r}
+# Matern Sphere Covariance Function  
+
+longlat_pred<-spatial_pred[,c("Longitude","Latitude")]
+locs_pred<-as.matrix(cbind(longlat_pred))
+X_pred <- as.matrix(rep(1,nrow(locs_pred)))
+
+prediction_mat <- predictions(fit_mat,locs_pred, X_pred, covparms = fit_mat$covparms, covfun_name = fit_mat$covfun_name, y_obs = fit_mat$y, locs_obs = fit_mat$locs, X_obs= fit_mat$X, beta=fit_mat$betahat, m = 60, reorder = TRUE)
+
+data_mat <- data.frame(Longitude = spatial_pred$Longitude, Latitude = spatial_pred$Latitude, predicted = prediction_mat)
+
+```
+
+```{r}
+#Plot of Exponential Sphere Covariance Function Prediction 
+
+plot_ly(
+  data = data_mat,
+  lon = ~Longitude,
+  lat = ~Latitude,
+  type = 'scattermapbox',
+  mode = 'markers',
+  color = ~predicted, # Color by a categorical variable, e.g., status
+  marker = list(size = 10, opacity = 0.8),
+  showlegend = FALSE,
+  text = ~paste("Predicted PM2.5: ", round(predicted, 4)),
+  hoverinfo = "text"
+) %>%
+  layout(
+    mapbox = list(
+    style = "open-street-map", #zoom into California
+    zoom = 4,
+    center = list(
+    lon = mean(data_mat$Longitude),
+    lat = mean(data_mat$Latitude)
+    )
+  )
+)
+```
+
+
+### MODEL COMPARISON TAB
+
+
+```{r}
+data_exp %>%
+  mutate(actual = spatial_pred$PM2.5) %>%
+  summarise(RSME = rmse(actual, predicted),
+            MAE = mae(actual, predicted),
+            Bias = bias(actual, predicted))
+
+data_mat %>%
+  mutate(actual = spatial_pred$PM2.5) %>%
+  summarise(RSME = rmse(actual, predicted),
+            MAE = mae(actual, predicted),
+            Bias = bias(actual, predicted))
+```
+
+
+
+
+
