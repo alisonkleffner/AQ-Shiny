@@ -435,17 +435,21 @@ ui <- navbarPage(
                     #br()
                     ),
 
-                   selectInput("cov_function_space", "Select Covariance Function:",
-                                       c("",
-                                         "Exponential Isotropic" = "exponential_isotropic",
-                                         "Spatial Matern" = "matern_isotropic")), # SELECT COVARIANCE FUNCTION
+                   # selectInput("cov_function_space", "Select Covariance Function:",
+                   #                     c("",
+                   #                       "Exponential Isotropic" = "exponential_isotropic",
+                   #                       "Spatial Matern" = "matern_isotropic")), # SELECT COVARIANCE FUNCTION (OLD)
+                  
+                  selectInput("cov_function_space", "Select Covariance Function:",
+                              c("",
+                                "Exponential Sphere" = "exponential_sphere",
+                                "Matern Sphere" = "matern_sphere")), # SELECT COVARIANCE FUNCTION (NEW)
                   
                    ), #END CONDITIONAL PANEL TO CHOOSE COVARIANCE FUNCTION ----------------------------------------------------------------------------------
 
-                 conditionalPanel(condition = "input.cov_function_space == 'exponential_isotropic'", #BEGIN COND PANEL FOR SPACE EXPONENTIAL ----------------
-                                 #helpText(
-                                 #        p("The function uses default values to begin fitting procedures. If you would like to specify your own starting values, click on the checkbox below.", style = "font-size: 16px; color: black"),
-                                 #        ), #HELP TEXT ABOUT DEFAULT STARTING VALUES
+                 #conditionalPanel(condition = "input.cov_function_space == 'exponential_isotropic'", #BEGIN COND PANEL FOR SPACE EXPONENTIAL (OLD) ----------------
+                 conditionalPanel(condition = "input.cov_function_space == 'exponential_sphere'", #BEGIN COND PANEL FOR SPACE EXPONENTIAL (NEW) ----------------
+                                                   
 
                                   checkboxInput("model_option_space_exponential", "Check for More Model Options", FALSE), #CHECKBOX FOR MODEL OPTIONS
                                  
@@ -481,8 +485,9 @@ ui <- navbarPage(
                                                 ) #END SUB COND PANEL FOR CODE TOGGLE ------------------------------------------------------------------------------
                            ), #END COND PANEL FOR SPACE EXPONENTIAL ------------------------------------------------------------------------------------------------
 
-                      conditionalPanel(condition = "input.cov_function_space == 'matern_isotropic'", #BEGIN COND PANEL FOR SPACE MATERN ----------------------------
-                                            
+                      # conditionalPanel(condition = "input.cov_function_space == 'matern_isotropic'", #BEGIN COND PANEL FOR SPACE MATERN (OLD) ----------------------------
+                      conditionalPanel(condition = "input.cov_function_space == 'matern_sphere'", #BEGIN COND PANEL FOR SPACE MATERN  (NEW) ----------------------------
+                                                        
                                        helpText(p(strong("Note:"), "This may take longer to run than the Exponential Covariance Function due to estimate of additional covariance parameter"),
                                                 #br(),
                                                 #p("The function uses default values for fitting procedures. If you would like to specify your own starting values, click on the checkbox below.", style = "font-size: 16px; color: black"),
@@ -528,7 +533,8 @@ ui <- navbarPage(
                 uiOutput("space_matern_param_info"), #DISPLAY MATHEMATICAL FORMULATION OF SPATIAL MATERN COVARIANCE FUNCTION
 
                 conditionalPanel( #BEGIN CONDITIONAL PANEL FOR EXPONETIAL FUNCTION AFTER RUN MODEL ------------------------------------------------------------------
-                  condition = "input.cov_function_space == 'exponential_isotropic' && input.run_model_space_exponential > 0",
+                  #condition = "input.cov_function_space == 'exponential_isotropic' && input.run_model_space_exponential > 0", #OLD
+                  condition = "input.cov_function_space == 'exponential_sphere' && input.run_model_space_exponential > 0", #NEW
                   
                   conditionalPanel(condition = "input.show_sp_model_code1 == false", #BEGIN SUB COND PANEL WHEN CODE TOGGLE OFF -------------------------------------
                           helpText(br()),
@@ -541,7 +547,9 @@ ui <- navbarPage(
                 ),  #END CONDITIONAL PANEL FOR EXPONETIAL FUNCTION AFTER RUN MODEL ----------------------------------------------------------------------------------
 
                 conditionalPanel( #BEGIN CONDITIONAL PANEL FOR MATERN FUNCTION AFTER RUN MODEL ----------------------------------------------------------------------
-                  condition = "input.cov_function_space == 'matern_isotropic' && input.run_model_space_matern > 0",
+                  #condition = "input.cov_function_space == 'matern_isotropic' && input.run_model_space_matern > 0", #OLD
+                  condition = "input.cov_function_space == 'matern_sphere' && input.run_model_space_matern > 0", #NEW
+                  
                   
                   conditionalPanel(condition = "input.show_sp_model_code2 == false", #BEGIN SUB COND PANEL WHEN CODE TOGGLE OFF -------------------------------------
                           helpText(br()),
@@ -572,14 +580,22 @@ ui <- navbarPage(
                 helpText(p(strong("Start:"), "To develop your Spatio-Temporal Gaussian Process Model, first specify the covariance function you would like to estimate. Currently two options are available. When you select a covariance function, it's mathematical formulation will appear. Default values are used to begin fitting proceures. To specify starting values, click the checkbox below. Once happy with your selection, click on ", strong("Run Model"), "to begin fitting procedures.", style = "font-size: 18px; color: black"),
                                 br()),  # HELP TEXT ABOUT CHOOSING COVARIANCE FUNCTION          
 
-                selectInput("cov_function", "Select Covariance Function:",
-                       c("",
-                         "Exponential Space-Time" = "exponential_spacetime",
-                         "Matern Space-Time" = "matern_spacetime")), #SELECT COVARIANCE FUNCTION
-                ), #END CONDITIONAL PANEL TO SELECT COVARIANCE FUNCTION --------------------------------------------------------------------------------------------
+                # selectInput("cov_function", "Select Covariance Function:",
+                #        c("",
+                #          "Exponential Space-Time" = "exponential_spacetime",
+                #          "Matern Space-Time" = "matern_spacetime")), #SELECT COVARIANCE FUNCTION
+                # ), #END CONDITIONAL PANEL TO SELECT COVARIANCE FUNCTION (OLD) --------------------------------------------------------------------------------------------
+             
+             selectInput("cov_function", "Select Covariance Function:",
+                         c("",
+                           "Exponential Sphere-Time" = "exponential_spheretime",
+                           "Matern Sphere-Time" = "matern_spheretime")), #SELECT COVARIANCE FUNCTION
+           ), #END CONDITIONAL PANEL TO SELECT COVARIANCE FUNCTION (NEW) --------------------------------------------------------------------------------------------
+          
 
-                conditionalPanel(condition = "input.cov_function == 'exponential_spacetime'", #BEGIN CONDITIONAL PANEL FOR EXPONENTIAL ST --------------------------
-                                     
+                #conditionalPanel(condition = "input.cov_function == 'exponential_spacetime'", #BEGIN CONDITIONAL PANEL FOR EXPONENTIAL ST (OLD) --------------------------
+                conditionalPanel(condition = "input.cov_function == 'exponential_spheretime'", #BEGIN CONDITIONAL PANEL FOR EXPONENTIAL ST (NEW) --------------------------
+                                                  
                         #helpText(p("The function uses default values to begin fitting procedures. If you would like to specify your own starting values, click on the checkbox below.", style = "font-size: 16px; color: black;"),
                         #         ), #HELPTEXT INSTRUCTIONS
                         
@@ -617,8 +633,9 @@ ui <- navbarPage(
                          ) #END SUB COND PANEL FOR CODE TOGGLE -----------------------------------------------------------------------------------------------------    
                        ), #END CONDITIONAL PANEL FOR EXPONENTIAL ST ------------------------------------------------------------------------------------------------
              
-             conditionalPanel(condition = "input.cov_function == 'matern_spacetime'", #BEGIN CONDITIONAL PANEL FOR MATERN ST ---------------------------------------
-                              
+             # conditionalPanel(condition = "input.cov_function == 'matern_spacetime'", #BEGIN CONDITIONAL PANEL FOR MATERN ST (OLD) ---------------------------------------
+             conditionalPanel(condition = "input.cov_function == 'matern_spheretime'", #BEGIN CONDITIONAL PANEL FOR MATERN ST (NEW) ---------------------------------------
+                                               
                               helpText(p("The function uses default values to begin fitting procedures. If you would like to specify your own starting values, click on the checkbox below.", style = "font-size: 16px; color: black;"),
                               ), #HELPTEXT INSTRUCTIONS
                               
@@ -668,8 +685,9 @@ ui <- navbarPage(
 
              uiOutput("st_exp_param_info"), #MATHEMATICAL FORMULATION OF ST EXPONENTIAL FUNCTION
 
-             conditionalPanel(condition = "input.cov_function == 'exponential_spacetime' && input.run_model > 0", #BEGIN COND PANEL FOR RUNNING EXPONENTIAL ST -----
-
+             #conditionalPanel(condition = "input.cov_function == 'exponential_spacetime' && input.run_model > 0", #BEGIN COND PANEL FOR RUNNING EXPONENTIAL ST (OLD) -----
+             conditionalPanel(condition = "input.cov_function == 'exponential_spheretime' && input.run_model > 0", #BEGIN COND PANEL FOR RUNNING EXPONENTIAL ST (NEW) -----
+                                               
                 conditionalPanel(condition = "input.show_st_model_code1 == false", #BEGIN SUB COND PANEL IF CODE TOGGLE IS FALSE -----------------------------------
                   shinycssloaders::withSpinner(uiOutput("result")) # RESULTS IN TABLE (SPINNER WHILE MODEL RUNS)
                  ), #END SUB COND PANEL IF CODE TOGGLE IS FALSE ----------------------------------------------------------------------------------------------------
@@ -682,8 +700,9 @@ ui <- navbarPage(
 
              uiOutput("st_matern_param_info"), #MATHEMATICAL FORMULATION OF ST EXPONENTIAL FUNCTION
              
-             conditionalPanel(condition = "input.cov_function == 'matern_spacetime' && input.run_model_st_matern > 0", #BEGIN COND PANEL FOR RUNNING MATERN ST -----
-                              
+             #conditionalPanel(condition = "input.cov_function == 'matern_spacetime' && input.run_model_st_matern > 0", #BEGIN COND PANEL FOR RUNNING MATERN ST (OLD) -----
+             conditionalPanel(condition = "input.cov_function == 'matern_spheretime' && input.run_model_st_matern > 0", #BEGIN COND PANEL FOR RUNNING MATERN ST (NEW) -----
+                                               
                         conditionalPanel(condition = "input.show_st_model_code2 == false", #BEGIN SUB COND PANEL IF CODE TOGGLE IS FALSE --------------------------
                                   shinycssloaders::withSpinner(uiOutput("result_st_matern")) # RESULTS IN TABLE (SPINNER WHILE MODEL RUNS)
                               ), #END SUB COND PANEL IF CODE TOGGLE IS FALSE ----------------------------------------------------------------------------------------------------
@@ -710,8 +729,9 @@ ui <- navbarPage(
               
              uiOutput("choice_container"),  
 
-             conditionalPanel(condition = "output.current_selection == 'IDW' || output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR SPATIAL DATASETS ---------
-
+             #conditionalPanel(condition = "output.current_selection == 'IDW' || output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR SPATIAL DATASETS (OLD) ---------
+             conditionalPanel(condition = "output.current_selection == 'IDW' || output.current_selection == 'Exponential Sphere' || output.current_selection == 'Matern Sphere'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR SPATIAL DATASETS (NEW) ---------
+                  
                      fileInput("upload_spatial_pred", "Upload Predicted Locations file (accepted: .csv)", accept = c(".csv")), #UPLOAD PREDICTON DATASET
                      
                      helpText(p("File must contain columns names:", style = "font-size: 16px; color: black"),  #START HELP TEXT FOR PLOT DESCRIPTION
@@ -732,14 +752,17 @@ ui <- navbarPage(
                         actionButton("run_pred_idw", "Calculate Prediction")
                ), # END CONDITIONAL PANEL FOR IDW PREDICTION BUTTON -------------------------------------------------------------------------------
 
-               conditionalPanel(condition = "output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", # BEGIN CONDITIONAL PANEL FOR SPATIAL GP PREDICTION BUTTON --------------
+               #conditionalPanel(condition = "output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", # BEGIN CONDITIONAL PANEL FOR SPATIAL GP PREDICTION BUTTON (OLD) --------------
+               conditionalPanel(condition = "output.current_selection == 'Exponential Sphere' || output.current_selection == 'Matern Sphere'", # BEGIN CONDITIONAL PANEL FOR SPATIAL GP PREDICTION BUTTON (NEW) --------------
+                                                 
                        helpText(p(strong("Step 2:"), "Once you have uploaded your dataset for prediction, click the button below. A map of your predictions will appear on the right and you will have the ability to download your predicted dataset. You can repeat this process for any model that you have ran by selecting a different checkbox above.", style = "font-size: 16px; color: black"),
                                  br(),
                                 ),
                        actionButton("run_pred_space_exp", "Calculate Prediction")
                ), # END CONDITIONAL PANEL FOR SPATIAL GP PREDICTION BUTTON --------------
              
-               conditionalPanel(condition = "output.current_selection == 'Exponential Space-Time' || output.current_selection == 'Matern Space-Time'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR ST DATASETS ---------
+              # conditionalPanel(condition = "output.current_selection == 'Exponential Space-Time' || output.current_selection == 'Matern Space-Time'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR ST DATASETS (OLD) ---------
+               conditionalPanel(condition = "output.current_selection == 'Exponential Sphere-Time' || output.current_selection == 'Matern Sphere-Time'", #BEGIN COND PANEL FOR UPLOAD INSTRUCTION FOR ST DATASETS (NEW) ---------
 
                   fileInput("upload_st_pred", "Upload Predicted Locations file", accept = c(".csv")), #UPLOAD PREDICTON DATASET
 
@@ -767,7 +790,9 @@ ui <- navbarPage(
 
             uiOutput("message4"),
            
-            conditionalPanel(condition = "output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", #BEGIN COND PANEL SPATIAL GP OUTPUT ---------
+            #conditionalPanel(condition = "output.current_selection == 'Exponential Isotropic' || output.current_selection == 'Matern Isotropic'", #BEGIN COND PANEL SPATIAL GP OUTPUT (OLD) ---------
+            conditionalPanel(condition = "output.current_selection == 'Exponential Sphere' || output.current_selection == 'Matern Sphere'", #BEGIN COND PANEL SPATIAL GP OUTPUT (NEW) ---------
+                                              
                              textOutput("contents_spatial"),
                              shinycssloaders::withSpinner(uiOutput("spat_exp_pred_result")),
                             br(),
@@ -782,7 +807,9 @@ ui <- navbarPage(
                             uiOutput("idw_pred_button")
            ), #END COND PANEL IDW OUTPUT -----------------------------------------------------------------------------------------------------------------------------------------------------
            
-           conditionalPanel(condition = "output.current_selection == 'Exponential Space-Time' || output.current_selection == 'Matern Space-Time'", #BEGIN COND PANEL FOR ST GP OUTPUT --------
+           #conditionalPanel(condition = "output.current_selection == 'Exponential Space-Time' || output.current_selection == 'Matern Space-Time'", #BEGIN COND PANEL FOR ST GP OUTPUT (OLD) --------
+           conditionalPanel(condition = "output.current_selection == 'Exponential Sphere-Time' || output.current_selection == 'Matern Sphere-Time'", #BEGIN COND PANEL FOR ST GP OUTPUT (NEW) --------
+                                             
                             textOutput("contents_st"),
                             shinycssloaders::withSpinner(uiOutput("st_pred_result")),
                             br(),
@@ -795,7 +822,7 @@ ui <- navbarPage(
       ), #END PREDICTIONS TAB
 
 
-  tabPanel("Model Comparison",
+  tabPanel("Model Comparison", 
            sidebarLayout(
              
              #BEGIN Side Panel --------------------------------------------------------------------------------------------------------------------
@@ -1376,7 +1403,6 @@ server <- function(input, output, session) {
   }) # Info to display when code toggle is true ---------------------------------------------------------------------------------------
 
   # Model TAB -------------------------------------------------------------------------------------------------------------------------
-
   ### Block out functionality for models when dataset not uploaded yet ---------------------------------------------------------------
   output$message2 <- renderUI({
     if (is.null(input$upload)) {
@@ -1579,10 +1605,11 @@ server <- function(input, output, session) {
   ## Exponential Space --------------------------------------------------------------------------------------------------------------
 
   output$space_exp_param_info <- renderUI({
-    if (input$cov_function_space == "exponential_isotropic") {
+    if (input$cov_function_space == "exponential_sphere") { #NEW
 
       withMathJax(
         helpText(strong("Description:", style = "color: black; font-size: 18px;"),
+                 tags$p(HTML("The Exponential Sphere Covariance function first calculates the (x,y,z) 3D coordinates, and then inputs the resulting locations into an Exponential Isotropic Covariance Function, so covariances are constructed on a sphere."), style = "color: black; font-size: 14px;"), #NEW
                  tags$p(HTML("The Exponential isotropic (depends only on distance) covariance function provides a common spatial dependence structure for relatively rough spatial surfaces"), style = "color: black; font-size: 14px;"),
                  br(),
           strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
@@ -1639,7 +1666,7 @@ server <- function(input, output, session) {
         y = response,
         locs = locs,
         X = X,
-        covfun_name = "exponential_isotropic",
+        covfun_name = "exponential_sphere", #NEW
         m_seq = c(15, 30), max_iter = input$max_iter_space_exponential,
         start_parms=params, convtol = 1e-05, reorder = TRUE)
       
@@ -1650,7 +1677,7 @@ server <- function(input, output, session) {
   
   
   
-  output$code_block_sp_model1<- renderPrint({
+  output$code_block_sp_model1<- renderPrint({ 
     
     cat(" library(GpGp) \n")
     
@@ -1661,13 +1688,13 @@ server <- function(input, output, session) {
  fit_model(y = response,
            locs = locs,
            X = X,
-           covfun_name = 'exponential_isotropic',
+           covfun_name = 'exponential_sphere',
            m_seq = c(15, 30), #sequence of values for number of neighbors
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, range, nugget), #optional specified starting values
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
-  }) # What to display when code toggle is true ---------------------------------------------------------------------------------
+  }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result_space_exponential <- renderUI({
     
@@ -1711,10 +1738,11 @@ server <- function(input, output, session) {
   ## Matern Space ----------------------------------------------------------------------------------------------------------------
 
   output$space_matern_param_info <- renderUI({
-    if (input$cov_function_space == "matern_isotropic") {
+    if (input$cov_function_space == "matern_sphere") { #NEW
 
       withMathJax(
         helpText(strong("Description:", style = "color: black; font-size: 18px;"),
+                 tags$p(HTML("The Matern Sphere Covariance function first calculates the (x,y,z) 3D coordinates, and then inputs the resulting locations into a Matern Isotropic Covariance Function, so covariances are constructed on a sphere."), style = "color: black; font-size: 14px;"), #NEW
                  tags$p(HTML("The Matern isotropic (depends only on distance) covariance function provides a additional flexibility compared to the exponential isotropic covariance function through the additional smoothness parameter."), style = "color: black; font-size: 14px;"),
                  br(),
                  strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
@@ -1770,13 +1798,13 @@ server <- function(input, output, session) {
       y = response,
       locs = locs,
       X = X,
-      covfun_name = "matern_isotropic",
+      covfun_name = "matern_sphere", #NEW
       m_seq = c(15, 30), max_iter = input$max_iter_space_matern,
       start_parms=params, convtol = 1e-05,reorder = TRUE)
 
   }) # Run spatial model with matern_isotropic covariance function-----------------------------------------------------------
   
-  output$code_block_sp_model2<- renderPrint({
+  output$code_block_sp_model2<- renderPrint({ 
     cat(" library(GpGp) \n")
     
     cat("\n locs <- as.matrix(dataset[, c('Longitude', 'Latitude')]) #create matrix of longitude/latitude
@@ -1786,13 +1814,13 @@ server <- function(input, output, session) {
  fit_model(y = response,
            locs = locs,
            X = X,
-           covfun_name = 'matern_isotropic',
+           covfun_name = 'matern_sphere',
            m_seq = c(15, 30), #sequence of values for number of neighbors
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, range, smooth, nugget), #optional specified starting values
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
-  }) # What to display when code toggle is true ---------------------------------------------------------------------------------
+  }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
 
 
   output$result_space_matern <- renderUI({
@@ -1837,10 +1865,15 @@ server <- function(input, output, session) {
   ## Exponential Space Time ------------------------------------------------------------------------------------------------------
 
   output$st_exp_param_info <- renderUI({
-    if (input$cov_function == "exponential_spacetime") {
+    if (input$cov_function == "exponential_spheretime") { #NEW
 
       withMathJax(
-        helpText(strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
+        helpText(strong("Description:", style = "color: black; font-size: 18px;"), 
+                 tags$p(HTML("The Exponential Sphere Time Covariance function first calculates the (x,y,z) 3D coordinates, and then inputs the resulting locations into an Exponential Space Time Covariance Function, so covariances are constructed on a sphere."), style = "color: black; font-size: 14px;"), #NEW
+                 tags$p(HTML("The Exponential Space Time covariance function then models the spatio-temporal dependence using exponential decay over spatial and time lags"), style = "color: black; font-size: 14px;"), #NEW
+                 br(),
+                 
+                 strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
                  tags$p(HTML("Parameter vector: \\((\\sigma^2, \\rho_s, \\rho_t, \\tau^2)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p("where:", style = "color: black; font-size: 14px;"),
                  tags$ul(
@@ -1879,7 +1912,7 @@ server <- function(input, output, session) {
 
     result <- tryCatch({
       # Potentially failing model code
-      fit <- fit_model(response, locs, X, "exponential_spacetime", max_iter = input$max_iter, start_parms= params, convtol = 1e-05, reorder = TRUE)
+      fit <- fit_model(response, locs, X, "exponential_spheretime", max_iter = input$max_iter, start_parms= params, convtol = 1e-05, reorder = TRUE) #NEW
     }, error = function(e) {
       # Return NULL or a custom message on failure
       return("Model Needs Starting Values")
@@ -1897,12 +1930,12 @@ server <- function(input, output, session) {
  fit_model(y = response,
            locs = locs,
            X = X,
-           covfun_name = 'exponential_spacetime',
+           covfun_name = 'exponential_spheretime',
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, spatial range, temporal range, nugget), #optional specified starting values
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
-  }) # What to display when code toggle is true ---------------------------------------------------------------------------------
+  }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
 
   output$result <- renderUI({
     covparms <- round(calculation()$covparms[1:4], 4)
@@ -1957,10 +1990,15 @@ server <- function(input, output, session) {
   })
   
   output$st_matern_param_info <- renderUI({
-    if (input$cov_function == "matern_spacetime") {
+    if (input$cov_function == "matern_spheretime") { #NEW
       
       withMathJax(
-        helpText(strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
+        helpText(strong("Description:", style = "color: black; font-size: 18px;"),
+                 tags$p(HTML("The Matern Sphere-Time Covariance function first calculates the (x,y,z) 3D coordinates, and then inputs the resulting locations into a Matern Space-Time Covariance Function, so covariances are constructed on a sphere."), style = "color: black; font-size: 14px;"), #NEW
+                 tags$p(HTML("The Matern Space-Time Covariance function provides a additional flexibility compared to the exponential space-time covariance function through the additional smoothness parameter."), style = "color: black; font-size: 14px;"), #NEW
+                 br(),
+                 
+                 strong("Mathematical Formulation:", style = "color: black; font-size: 18px;"),
                  tags$p(HTML("Parameter vector: \\((\\sigma^2, \\rho_s, \\rho_t, \\tau^2)\\)"), style = "color: black; font-size: 14px;"),
                  tags$p("where:", style = "color: black; font-size: 14px;"),
                  tags$ul(
@@ -2004,7 +2042,7 @@ server <- function(input, output, session) {
     
     result <- tryCatch({
       # Potentially failing model code
-      fit <- fit_model(response, locs, X, "matern_spacetime", max_iter = input$max_iter_st_matern, start_parms= params, convtol = 1e-05, reorder = TRUE)
+      fit <- fit_model(response, locs, X, "matern_spheretime", max_iter = input$max_iter_st_matern, start_parms= params, convtol = 1e-05, reorder = TRUE) #NEW
     }, error = function(e) {
       # Return NULL or a custom message on failure
       return("Model Needs Starting Values")
@@ -2022,12 +2060,12 @@ server <- function(input, output, session) {
  fit_model(y = response,
            locs = locs,
            X = X,
-           covfun_name = 'matern_spacetime',
+           covfun_name = 'matern_spheretime',
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, spatial range, temporal range, smooth, nugget), #optional specified starting values
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
-  }) # What to display when code toggle is true ---------------------------------------------------------------------------------
+  }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
   
   output$result_st_matern <- renderUI({
     covparms <- round(calculation_st_matern()$covparms[1:5], 4)
@@ -2086,11 +2124,11 @@ server <- function(input, output, session) {
   
   button_map <- list(
       run_idw = "IDW",
-      run_model_space_exponential = "Exponential Isotropic",
-      run_model_space_matern = "Matern Isotropic",
-      run_model = "Exponential Space-Time",
-      run_model_st_matern = "Matern Space-Time"
-    )
+      run_model_space_exponential = "Exponential Sphere",
+      run_model_space_matern = "Matern Sphere",
+      run_model = "Exponential Sphere-Time",
+      run_model_st_matern = "Matern Sphere-Time"
+    ) 
   
 
     add_choice_group <- function(choices, session) {
@@ -2345,7 +2383,7 @@ server <- function(input, output, session) {
   ### Spatial GP Prediction  ### ---------------------------------------------------------------
   
   model_pred_spatial <- eventReactive(input$run_pred_space_exp, {
-    if (current_selection() == "Exponential Isotropic") {
+    if (current_selection() == "Exponential Sphere") {
       
     pred.locs <- validated_data_pred_spatial() #changed
 
@@ -2364,7 +2402,7 @@ server <- function(input, output, session) {
       
   model_pred_spatial2 <- eventReactive(input$run_pred_space_exp, {
     
-    if (current_selection() == "Matern Isotropic") {
+    if (current_selection() == "Matern Sphere") {
       
       pred.locs <- validated_data_pred_spatial() #changed
 
@@ -2383,9 +2421,9 @@ server <- function(input, output, session) {
 
   output$exp_space_predictions_plot <- renderPlotly({
     
-    if (current_selection() == "Exponential Isotropic") {
+    if (current_selection() == "Exponential Sphere") {
     data <- model_pred_spatial()
-    } else if (current_selection() == "Matern Isotropic") {
+    } else if (current_selection() == "Matern Sphere") {
       data <- model_pred_spatial2()
     }
 
@@ -2418,9 +2456,9 @@ server <- function(input, output, session) {
       paste("predictions-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) { #changed
-      if (current_selection() == "Exponential Isotropic") {
+      if (current_selection() == "Exponential Sphere") {
         pred <- data.frame(validated_data_pred_spatial()[,c("ID", "Longitude","Latitude")], predicted = model_pred_spatial()[,"predicted"])
-      } else if (current_selection() == "Matern Isotropic") {
+      } else if (current_selection() == "Matern Sphere") {
         pred <- data.frame(validated_data_pred_spatial()[,c("ID", "Longitude","Latitude")], predicted = model_pred_spatial2()[,"predicted"])
       }
       write.csv(pred, file)
@@ -2548,7 +2586,7 @@ server <- function(input, output, session) {
   })#changed   
   
   model_pred_st <- eventReactive(input$run_pred_st, {
-    if (current_selection() == "Exponential Space-Time") {
+    if (current_selection() == "Exponential Sphere-Time") {
     pred.locs <- validated_data_pred_st()[,-1] #changed
 
     t_pred<-pred.locs[,"t"]
@@ -2564,7 +2602,7 @@ server <- function(input, output, session) {
   }) #Make predictions using uploaded dataset for EXP ST -------------------------------------------------------------------------------------------
   
   model_pred_st2 <- eventReactive(input$run_pred_st, {
-    if (current_selection() == "Matern Space-Time") {
+    if (current_selection() == "Matern Sphere-Time") {
     pred.locs <- validated_data_pred_st()[,-1] #changed
     
     t_pred<-pred.locs[,"t"]
@@ -2581,9 +2619,9 @@ server <- function(input, output, session) {
 
   output$predictions_plot <- renderPlotly({
     
-    if (current_selection() == "Exponential Space-Time") {
+    if (current_selection() == "Exponential Sphere-Time") {
       dat <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")],  predicted = model_pred_st()[,"predicted"])
-    } else if (current_selection() == "Matern Space-Time") {
+    } else if (current_selection() == "Matern Sphere-Time") {
       dat <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")],  predicted = model_pred_st2()[,"predicted"])
     } #changed
 
@@ -2617,9 +2655,9 @@ server <- function(input, output, session) {
       paste("predictions-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) { #changed
-      if (current_selection() == "Exponential Space-Time") {
+      if (current_selection() == "Exponential Sphere-Time") {
         pred <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")], predicted = model_pred_st()[,"predicted"])
-      } else if (current_selection() == "Matern Space-Time"){
+      } else if (current_selection() == "Matern Sphere-Time"){
         pred <- data.frame(validated_data_pred_st()[,c("ID", "Longitude","Latitude", "t")], predicted = model_pred_st2()[,"predicted"])
       }
       write.csv(pred, file, row.names = FALSE)
@@ -2728,10 +2766,10 @@ server <- function(input, output, session) {
     pred <- switch(
       sel,
       "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     rmse <- Metrics::rmse(pred$logPM2.5, pred$predicted)
@@ -2752,10 +2790,10 @@ server <- function(input, output, session) {
     pred <- switch(
       sel,
       "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     mae <- Metrics::mae(pred$logPM2.5, pred$predicted)
@@ -2776,10 +2814,10 @@ server <- function(input, output, session) {
     pred <- switch(
       sel,
       "IDW" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = pred_idw()$var1.pred),
-      "Exponential Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
-      "Matern Isotropic" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
-      "Exponential Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
-      "Matern Space-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
+      "Exponential Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial()[, "predicted"]),
+      "Matern Sphere" = data.frame(data_pred_spatial()[, c("ID", "Longitude", "Latitude", "logPM2.5")], predicted = model_pred_spatial2()[, "predicted"]),
+      "Exponential Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st()[, "predicted"]),
+      "Matern Sphere-Time" = data.frame(data_pred_st()[, c("ID", "Longitude", "Latitude", "t", "logPM2.5")], predicted = model_pred_st2()[, "predicted"])
     )
     
     cor <- cor(pred$logPM2.5, pred$predicted)
