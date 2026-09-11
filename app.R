@@ -1951,6 +1951,7 @@ server <- function(input, output, session) {
            covfun_name = 'exponential_spheretime',
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, spatial range, temporal range, nugget), #optional specified starting values
+           m_seq = c(15, 30), #sequence of values for number of neighbors
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
   }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
@@ -2081,6 +2082,7 @@ server <- function(input, output, session) {
            covfun_name = 'matern_spheretime',
            max_iter = maximum_number_of_iterations,
            start_parms=c(variance, spatial range, temporal range, smooth, nugget), #optional specified starting values
+           m_seq = c(15, 30), #sequence of values for number of neighbors
            convtol = 1e-05, #convergence criteria
            reorder = TRUE)")
   }) #NEW # What to display when code toggle is true ---------------------------------------------------------------------------------
