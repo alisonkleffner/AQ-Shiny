@@ -352,8 +352,8 @@ display: none;
 </div>
 
 
-<div id="aq-shiny-usage-instructions" class="section level1">
-<h1>AQ-Shiny Usage Instructions</h1>
+<div id="aq-shiny-verision-1.0.0-usage-instructions" class="section level1">
+<h1>AQ-Shiny (Verision 1.0.0) Usage Instructions</h1>
 <p>AQ-Shiny is a web-based application intended for the exploration,
 comparison, and prediction of PM2.5 using spatial and spatio-temporal
 models. It was built under R (4.5.2) and R studio (2026.01.1+403) using
@@ -364,10 +364,10 @@ R Shiny version 1.13.0.</p>
 <li>app.R: Shiny app code for creation of AQ-Shiny</li>
 <li>manifest.json: R Package information used in AQ-Shiny</li>
 <li>example-data folder: some toy data sets so users can test out
-AQ-Shiny</li>
-<li>Case Study Folder: Folder that replicates AQ-Shiny Output using data
-from the example-data folder to verify methods are consistent within and
-outside of application</li>
+AQ-Shiny and replicate case studies</li>
+<li>Case Study Folder: Folder that contains Quarto files that replicate
+AQ-Shiny Output using data from the example-data folder to verify
+methods are consistent within and outside of application</li>
 </ul>
 </div>
 <div id="instructions-download-aq-shiny-on-local-computer" class="section level3">
@@ -377,8 +377,16 @@ outside of application</li>
 <li>Download “app.R” which contains all of the code used to create
 AQ-Shiny.</li>
 <li>Version of R Packages used in creation of AQ-Shiny can be found in
-“manifest.json”, so for best use of AQ-Shiny make sure necessary
-packages are updated to the proper version.</li>
+<code>renv.lock</code>, so for best use of AQ-Shiny make sure necessary
+packages are updated to the proper version.
+<ul>
+<li>To restore the environment, run: <code>renv:restore()</code>. This
+will use the <code>renv.lock</code> file to install the required
+packages and recreate the project’s computational environment. Then run
+<code>renv::status()</code> to confirm everything is synchronized.</li>
+<li>Note: Run these commands from within the RStudio project
+directory.</li>
+</ul></li>
 <li>Open “app.R” in R Studio and click “Run App” to get AQ-Shiny to
 appear in a separate window.</li>
 </ul>

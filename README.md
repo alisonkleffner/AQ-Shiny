@@ -1,4 +1,4 @@
-# AQ-Shiny Usage Instructions
+# AQ-Shiny (Verision 1.0.0) Usage Instructions
 
 AQ-Shiny is a web-based application intended for the exploration, comparison, and prediction of PM2.5 using spatial and spatio-temporal models. It was built under R (4.5.2) and R studio (2026.01.1+403) using R Shiny version 1.13.0.
 
@@ -7,8 +7,9 @@ AQ-Shiny is a web-based application intended for the exploration, comparison, an
 
 - app.R: Shiny app code for creation of AQ-Shiny
 - manifest.json: R Package information used in AQ-Shiny
-- example-data folder: some toy data sets so users can test out AQ-Shiny
-- Case Study Folder: Folder that replicates AQ-Shiny Output using data from the example-data folder to verify methods are consistent within and outside of application
+- example-data folder: some toy data sets so users can test out AQ-Shiny and replicate case studies
+- Case Study Folder: Folder that contains Quarto files that replicate AQ-Shiny Output using data from the example-data folder to verify methods are consistent within and outside of application
+
 
 
 ### Instructions: Download AQ-Shiny on local computer
@@ -16,7 +17,9 @@ AQ-Shiny is a web-based application intended for the exploration, comparison, an
 To use AQ-Shiny on your own computer:
 
 - Download "app.R" which contains all of the code used to create AQ-Shiny. 
-- Version of R Packages used in creation of AQ-Shiny can be found in "manifest.json", so for best use of AQ-Shiny make sure necessary packages are updated to the proper version.
+- Version of R Packages used in creation of AQ-Shiny can be found in `renv.lock`, so for best use of AQ-Shiny make sure necessary packages are updated to the proper version.
+  + To restore the environment, run: `renv:restore()`. This will use the `renv.lock` file to install the required packages and recreate the project's computational environment. Then run `renv::status()` to confirm everything is synchronized.
+  + Note: Run these commands from within the RStudio project directory.
 - Open "app.R" in R Studio and click "Run App" to get AQ-Shiny to appear in a separate window.
 
 
