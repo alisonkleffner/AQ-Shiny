@@ -1,0 +1,227 @@
+---
+title: "Spatio-Temporal Case Study Code"
+format: html
+execute: 
+  warning: false
+  message: false
+---
+
+```{r}
+## Necessary R Packages
+library(GpGp)
+library(tidyverse)
+library(sp)
+library(sf)
+library(leaflet)
+library(plotly)
+library(leafpop)
+library(kableExtra)
+library(gstat)
+library(fields)
+library(Metrics)
+library(viridis)
+```
+
+### DATA UPLOAD TAB
+
+```{r}
+# Read in Data
+st_data <- read_csv("../example-data/st_example.csv")
+```
+
+```{r}
+#Calculate Summary Statistics
+st_data %>%
+  group_by(ID) %>%
+  summarise("Number of Measurements" = n(),
+            "Latitude" = round(mean(Latitude),4),
+            "Longitude" = round(mean(Longitude),4),
+            "Average of PM2.5" = round(mean(PM2.5, na.rm = TRUE), 4),
+            "Standard deviation of PM2.5" = round(sd(PM2.5, na.rm = TRUE), 4))
+```
+
+
+### VISUALIZATION TAB
+
+```{r}
+#Create Space in Time Map
+
+filter_meuse <- st_data[,c("t", "Longitude", "Latitude", "PM2.5")] #changed
+      
+plot_ly(
+  data = filter_meuse,
+  lon = ~Longitude,
+  lat = ~Latitude,
+  type = 'scattermapbox',
+  mode = 'markers',
+  color = ~PM2.5, # Color by a categorical variable, e.g., status
+  colors = viridis::cividis(n = 100),
+  frame = ~t, # Animate across time points #changed
+  marker = list(size = 10, opacity = 0.8),
+  showlegend = FALSE,
+  text = ~paste("PM2.5: ", round(PM2.5, 4)),
+  hoverinfo = "text"
+  ) %>%
+  layout(
+    mapbox = list(
+      style = "open-street-map", #zoom into california
+      zoom = 5,
+      center = list(
+        lon = mean(filter_meuse$Longitude),
+        lat = mean(filter_meuse$Latitude)
+        )
+      )
+    )
+```
+
+```{r}
+#Create Time in Space Map
+
+makePopupPlot <- function (clickedArea, df) {
+    plotData <- df[c("ID", "t","PM2.5", "Latitude", "Longitude")] #changed
+    plotDataSubset <- subset(plotData, plotData['ID'] == clickedArea)
+    
+    popupPlot <- ggplot(data = plotDataSubset,  aes(x = t, y = PM2.5)) + #changed
+      geom_point() +
+      geom_line(group = 1) +
+      xlab("Time") +
+      ggtitle(paste0("Time Series of PM2.5 in ", clickedArea)) +
+      theme(legend.position = "none",
+            axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+      theme(plot.margin = unit(c(0,0.5,0,0), "cm"), plot.title = element_text(size = 10))
+    
+    return (popupPlot)
+} #Define function to create pop ups when hover over points 
+
+id_only <- st_data %>%
+  group_by(ID) %>%
+  summarise(lat = mean(Latitude),
+            long = mean(Longitude))
+
+p <- as.list(NULL)
+p <- lapply(1:length(unique(st_data$ID)), function(i) {
+  p[[i]] <- makePopupPlot(unique(st_data$ID)[i], st_data)
+  })
+
+leaflet(id_only) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~long,
+    lat = ~lat,
+    popup = popupGraph(p, type = "svg", width = 200, height = 200) # Embed the plots
+    )
+
+```
+
+### MODELING TAB
+
+```{r}
+# Exponential Sphere Covariance Function  
+
+loc <- st_data[,c("Longitude","Latitude","t")]
+locs <- as.matrix(loc)
+response <- as.matrix(st_data[,c("PM2.5")])
+X <- as.matrix( rep(1,nrow(locs))) # Intercept-only mean model
+
+
+fit_st_exp <- fit_model(
+  y = response,
+  locs = locs,
+  X = X,
+  covfun_name = "exponential_spheretime", 
+  m_seq = c(15, 30), max_iter = 100,
+  convtol = 1e-05, reorder = TRUE,
+  silent = TRUE)
+
+
+fit_st_exp[["covparms"]]
+fit_st_exp$conv
+```
+
+```{r}
+# Matern Sphere Covariance Function  
+
+loc <- st_data[,c("Longitude","Latitude","t")]
+locs <- as.matrix(loc)
+response <- as.matrix(st_data[,c("PM2.5")])
+X <- as.matrix( rep(1,nrow(locs))) # Intercept-only mean model
+
+
+fit_st_mat <- fit_model(
+  y = response,
+  locs = locs,
+  X = X,
+  covfun_name = "matern_spheretime", 
+  m_seq = c(15, 30), max_iter = 100,
+  convtol = 1e-05, reorder = TRUE,
+  silent = TRUE)
+
+
+fit_st_mat[["covparms"]]
+fit_st_mat$conv
+```
+
+
+### PREDICTION TAB
+
+```{r}
+# Read in Prediction Data
+st_pred <- read_csv("../example-data/pred_st.csv")
+```
+
+
+```{r}
+# Exponential Sphere-Time Covariance Function  
+
+pred.locs <- st_pred[,-1] 
+
+t_pred<-pred.locs[,"t"]
+longlat_pred<-pred.locs[,c("Longitude","Latitude")]
+locs_pred<-as.matrix(cbind(longlat_pred,t_pred))
+X_pred <- as.matrix(rep(1,nrow(locs_pred)))
+
+prediction_exp <- predictions(fit_st_exp, locs_pred, X_pred, covparms = fit_st_exp$covparms, covfun_name = fit_st_exp$covfun_name, y_obs = fit_st_exp$y, locs_obs = fit_st_exp$locs, X_obs= fit_st_exp$X, beta=fit_st_exp$betahat, m = 60, reorder = TRUE)
+
+data_exp <- data.frame(Longitude = st_pred$Longitude, Latitude = st_pred$Latitude, predicted = prediction_exp)
+
+```
+
+
+```{r}
+# Matern Sphere-Time Covariance Function  
+
+pred.locs <- st_pred[,-1] 
+
+t_pred<-pred.locs[,"t"]
+longlat_pred<-pred.locs[,c("Longitude","Latitude")]
+locs_pred<-as.matrix(cbind(longlat_pred,t_pred))
+X_pred <- as.matrix(rep(1,nrow(locs_pred)))
+
+prediction_mat <- predictions(fit_st_mat, locs_pred, X_pred, covparms = fit_st_mat$covparms, covfun_name = fit_st_mat$covfun_name, y_obs = fit_st_mat$y, locs_obs = fit_st_mat$locs, X_obs= fit_st_mat$X, beta=fit_st_mat$betahat, m = 60, reorder = TRUE)
+
+data_exp <- data.frame(Longitude = st_pred$Longitude, Latitude = st_pred$Latitude, predicted = prediction_mat)
+
+```
+
+
+### MODEL COMPARISON TAB
+
+
+```{r}
+data_exp %>%
+  mutate(actual = st_pred$PM2.5) %>%
+  summarise(RSME = rmse(actual, predicted),
+            MAE = mae(actual, predicted),
+            Bias = bias(actual, predicted))
+
+data_mat %>%
+  mutate(actual = st_pred$PM2.5) %>%
+  summarise(RSME = rmse(actual, predicted),
+            MAE = mae(actual, predicted),
+            Bias = bias(actual, predicted))
+```
+
+
+
+
+
